@@ -35,19 +35,38 @@ function display($msg, $type = "Information", $disableLog = $false){
     }
 }
 
-function translate($msg, $revert){
-    $msgNew=$msg
-    if($global:systemLanguage -ne "en"){
-        if($revert -eq $true){
-            $msgNew=($msg | Get-Translation -ToLanguage "en")
-        }else{
-            $msgNew=($msg | Get-Translation -ToLanguage $global:systemLanguage)
-        }
-        if($msgNew -match "^Error.*" -and $revert -ne $true){
-            $msgNew=$msg
-        }
+function translate($text,$revert){
+    if($global:systemLanguage -eq "en"){
+        return $text
     }
-    return $msgNew
+
+    if($revert -eq $true){
+        $toLang="en"
+    }else{
+        $toLang=$global:systemLanguage
+    }
+
+    $uri=$global:TranslateTokenURL+"?Subscription-Key="+$global:TranslateAccountKey
+    try{
+        $token=Invoke-RestMethod -Uri $uri -Method Post -ErrorAction Stop
+    
+        $auth="Bearer "+$token
+        $header=@{Authorization=$auth}
+        $fromLang="en"
+
+        $uri=$global:TranslateURL+"?text="+[System.Web.HttpUtility]::UrlEncode($text)+"&from="+$fromLang+"&to="+$toLang+"&contentType=text/plain"
+
+        try{
+            $ret=Invoke-RestMethod -Uri $uri -Method Get -Headers $header -ErrorAction Stop
+            $ret=$ret.string.'#text'
+
+            return $ret
+        }catch{
+            return $text
+        }
+    }catch{
+        return $text
+    }
 }
 
 function transfer($source, $dest){
@@ -153,7 +172,7 @@ function iniWinX(){
 }
 
 function resetWinApps(){
-    Get-AppXPackage -AllUsers | Foreach {
+    Get-AppXPackage -User $global:username | Foreach {
         Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"
     }
 }
@@ -196,7 +215,7 @@ function removeApps(){
                         Remove-Variable h -ErrorAction Stop
                     }catch{}
 	                #$h.fullname=(Get-AppXProvisionedPackage -online | where-object {$_.DisplayName -ieq "$($h.name)"}).PackageName
-                    $h=Get-AppXPackage | where-object {$_.Name -match ".*$($global:CleanApps_ListItem[$i][$ii][0]).*"}
+                    $h=Get-AppXPackage -User $global:username | where-object {$_.Name -match ".*$($global:CleanApps_ListItem[$i][$ii][0]).*"}
 	                if ($h.PackageFullName -and $h.name) {
 		                $Found+=$a.length
 	                } else {
@@ -246,12 +265,16 @@ function removeApps(){
                 Write-Progress -Id 0 -Activity "Removing $($a[$Found[$i]].name).." -PercentComplete $($i/($Found.length-1)*100)
 
 			    #Remove-AppxProvisionedPackage -Online -PackageName $a[$Found[$i]].fullname
-                Get-AppxPackage | Where-Object {$_.Name -ieq $a[$Found[$i]].fullname} | Remove-AppxPackage
+
+                
                 try{
-                    Remove-AppxPackage -Package $($a[$Found[$i]].PackageFullName) -ErrorAction Stop
-	                display "The Package $($a[$Found[$i]].name -replace "\."," ") has been successfully removed!"
+                    #Remove-AppxPackage -Package $($a[$Found[$i]].PackageFullName) -ErrorAction Stop
+                    #Get-AppxPackage -User $global:username $a[$Found[$i]].PackageFullName
+                    Get-AppxPackage -User $global:username $a[$Found[$i]].Name | Remove-AppxPackage -ErrorAction Stop
+                    
+	                display "The Package $($a[$Found[$i]].Name -replace "\."," ") has been successfully removed!"
                 }catch{
-                    display "The Package $($a[$Found[$i]].name -replace "\."," ") could not be removed!" "Warning"
+                    display "The Package $($a[$Found[$i]].Name -replace "\."," ") could not be removed!" "Warning"
                 }
 		    }
 	    }
@@ -331,10 +354,10 @@ function CommandStore(){
 
 ########### begining registry functions
 
-$global:user=translate "Administrateurs"
-$global:rights = "FullControl"
+$global:adminGroup=translate "Administrators"
+$global:rights="FullControl"
 $global:propagationFlag="none"
-$global:inheritanceFlag = "ContainerInherit"
+$global:inheritanceFlag="ContainerInherit"
 $global:rule="Allow"
 $global:disableInheritance=$true
 $global:preserverInheritanceIfDisabled=$true
@@ -477,8 +500,8 @@ Function SetPermissions($key){
         $key=$keyArr[0..($keyArr.Length-2)] -join "\"
     }
     try{
-        TakeOwnership-Object $key $global:user -ErrorAction Stop
-        Add-RuleItem $key $global:user $global:rights $global:propagationFlag $global:inheritanceFlag $global:rule -ErrorAction Stop
+        TakeOwnership-Object $key $global:adminGroup -ErrorAction Stop
+        Add-RuleItem $key $global:adminGroup $global:rights $global:propagationFlag $global:inheritanceFlag $global:rule -ErrorAction Stop
         ChangeInheritance-Object $key $global:disableInheritance $global:preserverInheritanceIfDisabled -ErrorAction Stop
     }catch{
         throw $_

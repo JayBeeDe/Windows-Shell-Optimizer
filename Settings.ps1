@@ -11,6 +11,9 @@ $global:UserWinXPath="$($global:userPath)\AppData\Local\Microsoft\Windows\WinX"
 $global:PSLangTranslateClientId="707e70c0-e67b-425c-b10e-e78880b29f64"
 $global:PSLangTranslateClientSecret="u71hMWGjCK0JEXBqaJMsYkIFeuMDQfbL/uHSMfT90os"
 
+$global:TranslateAccountKey="a9405b496e35440882154d696d71140c"
+$global:TranslateTokenURL="https://api.cognitive.microsoft.com/sts/v1.0/issueToken"
+$global:TranslateURL="https://api.microsofttranslator.com/v2/Http.svc/Translate"
 
 $global:module_CleanStartMenuItem=$false
 $global:CleanStartMenuItem_ExcludedFolder="Tool", "Accessor", "Startup"
@@ -26,7 +29,7 @@ $global:CleanStartMenuItem_WinXItem=
     )
 )
 
-$global:module_CleanApps=$false
+$global:module_CleanApps=$true
 #Set to false if not Windows 10
 $global:CleanApps_ResetApps=$false
 $global:CleanApps_SupressPrompt=$false

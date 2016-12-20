@@ -51,8 +51,8 @@ If (!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]
         Write-Host "This specified user has no path in $($env:SystemDrive)\Users\$($user)" -ForegroundColor Red
         Exit        
     }
-    $global:user=$user
-    $global:userPath="$($env:SystemDrive)\Users\$($global:user)"
+    $global:username=$user
+    $global:userPath="$($env:SystemDrive)\Users\$($global:username)"
 }
 
 try{
@@ -75,23 +75,9 @@ try{
     write-host "Unable to detect system language - The script has been set to the default system language - English!" -ForegroundColor Yellow
 }
 
-if($global:systemLanguage -ne "en"){
-    try{
-        Import-Module "$($global:currentLocation)\LangTranslate\LangTranslate.psd1" -ErrorAction Stop -Scope Local
-    }catch{
-        Write-host "The translation module is not available" -BackgroundColor Red
-        Exit
-    }
-    $test=('hello' | Get-Translation -ToLanguage $global:systemLanguage)
-    if($test -match "^Error"){
-        Write-host "The translation module for your system language $($global:systemLanguage) doesn't work. It will be set back to english!" -ForegroundColor Yellow
-        $global:systemLanguage="en"
-    }
-}
-
 cd /
 cls
-display "The script is running!"
+display "The script is begining!"
 
 if($global:module_CleanStartMenuItem){
     transfer $global:AllUserPath $global:UserStartMenuPath
