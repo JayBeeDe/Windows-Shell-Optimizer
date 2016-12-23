@@ -20,8 +20,7 @@ display language, all settings must be in english language.
 
 ## FILES
 
-- README
-- LICENSE
+- README.md
 - Main.ps1
 - Core.psm1
 - Settings.ps1
