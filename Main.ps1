@@ -2,10 +2,9 @@
 Application: Windows Shell Optimizer
 Description: This PowerShell Script can clean your start menu and your system shell.
 Author: Jean-Baptiste Delon
-Third Dependencies: LangTranslate PowerShell module, and hashlnk.exe software
+Third Dependency: hashlnk.exe software
 
-License: the script (wihout its two tird dependencies) is under GNU GPL v3.0 license and can be edited, distributed for commercial/private use.
-For the LangTranslate module license, please see http://www.powershelladmin.com/wiki/Using_the_Microsoft_Translator_API_from_PowerShell (seems opensource)
+License: the script (wihout its tird dependency) is under GNU GPL v3.0 license and can be edited, distributed for commercial/private use.
 For the hashlnk.exe utility license, see https://github.com/riverar/hashlnk/blob/master/LICENSE (opensource).
 #>
 

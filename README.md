@@ -26,17 +26,13 @@ display language, all settings must be in english language.
 - Core.psm1
 - Settings.ps1
 - hashlnk.exe
-- LangTranslate\LangTranslate.psd1
-- LangTranslate\LangTranslate.psm1
 
 ## LICENSE
 
-- LangTranslate module license: seems opensource.
-Please see http://www.powershelladmin.com/wiki/Using_the_Microsoft_Translator_API_from_PowerShell
 - hashlnk.exe utility is opensourse.
 See https://github.com/riverar/hashlnk/blob/master/LICENSE
-- Otherwise the script (wihout this two tird dependencies) is under GNU 
-GPL v3.0 license and can be edited, distributed for commercial/private use.
+- Otherwise the script is under GNU GPL v3.0 license and can be edited, 
+distributed for commercial/private use.
 BUT
 Script is provided without warranty and the author/license
 owner cannot be held liable for damages.
