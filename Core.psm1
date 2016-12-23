@@ -46,6 +46,10 @@ function translate($text,$revert){
         $toLang=$global:systemLanguage
     }
 
+    $listEscape=[System.Collections.ArrayList]@()
+    Select-String "\'(.*?)\'" -input $text -AllMatches | Foreach {$listEscape=@($_.matches.Value -replace "\'","")} | Out-Null
+    $tmpText=$text -replace "\'(.*?)\'","X"
+
     $uri=$global:TranslateTokenURL+"?Subscription-Key="+$global:TranslateAccountKey
     try{
         $token=Invoke-RestMethod -Uri $uri -Method Post -ErrorAction Stop
@@ -54,12 +58,18 @@ function translate($text,$revert){
         $header=@{Authorization=$auth}
         $fromLang="en"
 
-        $uri=$global:TranslateURL+"?text="+[System.Web.HttpUtility]::UrlEncode($text)+"&from="+$fromLang+"&to="+$toLang+"&contentType=text/plain"
+        $uri=$global:TranslateURL+"?text="+[System.Web.HttpUtility]::UrlEncode($tmpText)+"&from="+$fromLang+"&to="+$toLang+"&contentType=text/plain"
 
         try{
             $ret=Invoke-RestMethod -Uri $uri -Method Get -Headers $header -ErrorAction Stop
             $ret=$ret.string.'#text'
 
+            [regex]$pattern="X"
+            $k=0
+            $listEscape | foreach{
+                $ret=$pattern.replace($ret,$listEscape[$k],$k+1)
+                $k++
+            }
             return $ret
         }catch{
             return $text
@@ -147,7 +157,7 @@ function iniWinX(){
                 try{
                     New-Item -Path $global:UserWinXPath -Name $group -ItemType Directory -ErrorAction Stop | Out-Null
                 }catch{
-                    display "An error as occured while creating the $($group) directory!" "Warning"
+                    display "An error as occured while creating the '$($group)' directory!" "Warning"
                 }
             }
             if($i -eq 0){
@@ -165,7 +175,7 @@ function iniWinX(){
                 }
             }
         }else{
-            display "More than 3 groups cannot be set up in the WinX Menu!" "Warning"
+            display "More than 3 groups cannot be set up in the 'WinX Menu'!" "Warning"
             break
         }
     }
@@ -238,7 +248,7 @@ function removeApps(){
                 $listToRemove+="."
             }
 	    }
-	    display "The following elements will be removed : $($listToRemove)" "Warning" $true
+	    display "The following elements will be removed : '$($listToRemove)'" "Warning" $true
     }
     if ($NotFound.length -gt 0) {
         $listToLet=""
@@ -250,7 +260,7 @@ function removeApps(){
                 $listToLet+="."
             }
 	    }
-	    display "The following elements have not been found in the system (and will NOT be removed) : $($listToLet)" "Warning" $true
+	    display "The following elements have not been found in the system (and will NOT be removed) : '$($listToLet)'" "Warning" $true
     }
 
     if ($Found.length -gt 0) {
@@ -272,9 +282,9 @@ function removeApps(){
                     #Get-AppxPackage -User $global:username $a[$Found[$i]].PackageFullName
                     Get-AppxPackage -User $global:username $a[$Found[$i]].Name | Remove-AppxPackage -ErrorAction Stop
                     
-	                display "The Package $($a[$Found[$i]].Name -replace "\."," ") has been successfully removed!"
+	                display "The Package '$($a[$Found[$i]].Name -replace "\."," ")' has been successfully removed!"
                 }catch{
-                    display "The Package $($a[$Found[$i]].Name -replace "\."," ") could not be removed!" "Warning"
+                    display "The Package '$($a[$Found[$i]].Name -replace "\."," ")' could not be removed!" "Warning"
                 }
 		    }
 	    }
@@ -570,17 +580,17 @@ Function SetRegistryKey($keyPath,$itemAction="DELETE",$value){
         if(Test-Path -LiteralPath "$($global:prefix)$($keyPath)"){
             try{
                 removeKey $keyPath -ErrorAction Stop
-                display "The key $($keyPath) and its subkeys have been successfully removed!"
+                display "The key '$($keyPath)' and its subkeys have been successfully removed!"
             }catch{
                 if($flag -eq $true){
-                    display "Master error while changing permissions on $($keyPath)" "Warning"
+                    display "Master error while changing permissions on '$($keyPath)'" "Warning"
                 }else{
-                    display "Master error while removing key $($keyPath)" "Warning"
+                    display "Master error while removing key '$($keyPath)'" "Warning"
                 }
             }
         }else{
             if($global:RegistryChanges_ShowLogAlreadyDoneItems -eq $true){
-                display "Master Key $($keyPath) has already been removed!"
+                display "Master Key '$($keyPath)' has already been removed!"
             }
         }
     }else{
@@ -596,17 +606,17 @@ Function SetRegistryKey($keyPath,$itemAction="DELETE",$value){
             try{
                 SetKey $keyPath $itemAction $value -ErrorAction Stop
                 #missing implementation for setting permissions when new keys have been created - no issues related till now
-                display "New item $($itemAction) successfully set on key $($keyPath)!"
+                display "New item '$($itemAction)' successfully set on key '$($keyPath)'!"
             }catch{
                 if($flag -eq $true){
-                    display "Master error while changing permissions on $($keyPath)" "Warning"
+                    display "Master error while changing permissions on '$($keyPath)'" "Warning"
                 }else{
-                    display "Master error while setting $($itemAction) on key $($keyPath)" "Warning"
+                    display "Master error while setting '$($itemAction)' on key '$($keyPath)'" "Warning"
                 }
             }
         }else{
             if($global:RegistryChanges_ShowLogAlreadyDoneItems -eq $true){
-                display "Master Key $($keyPath) has already been set to the ordered value!"
+                display "Master Key '$($keyPath)' has already been set to the ordered value!"
             }
         }
     }

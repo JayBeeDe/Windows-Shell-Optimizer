@@ -44,6 +44,9 @@ information.
 
 Download and unzip (if needed) the files.
 
+Note: Execution Policy must be ENABLED in order to get the PowerShell script running.
+Please See https://msdn.microsoft.com/en-us/powershell/reference/5.1/microsoft.powershell.security/set-executionpolicy
+
 Configure the settings by the way of the file Settings.ps1 with powershell_ise
 
 You can run this script:

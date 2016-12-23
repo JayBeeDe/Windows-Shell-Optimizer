@@ -8,9 +8,6 @@ $global:AllUserPath="$($env:SystemDrive)\ProgramData\Microsoft\Windows\Start Men
 $global:UserStartMenuPath="$($global:userPath)\AppData\Roaming\Microsoft\Windows\Start Menu\Programs"
 $global:UserWinXPath="$($global:userPath)\AppData\Local\Microsoft\Windows\WinX"
 
-$global:PSLangTranslateClientId="707e70c0-e67b-425c-b10e-e78880b29f64"
-$global:PSLangTranslateClientSecret="u71hMWGjCK0JEXBqaJMsYkIFeuMDQfbL/uHSMfT90os"
-
 $global:TranslateAccountKey="a9405b496e35440882154d696d71140c"
 $global:TranslateTokenURL="https://api.cognitive.microsoft.com/sts/v1.0/issueToken"
 $global:TranslateURL="https://api.microsofttranslator.com/v2/Http.svc/Translate"
