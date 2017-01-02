@@ -272,19 +272,36 @@ function removeApps(){
         }
 	    if ($answ -ieq "Y" -or $answ -eq "") {
 		    for ($i=0; $i -lt $Found.length; $i++) {
-                Write-Progress -Id 0 -Activity "Removing $($a[$Found[$i]].name).." -PercentComplete $($i/($Found.length-1)*100)
-
-			    #Remove-AppxProvisionedPackage -Online -PackageName $a[$Found[$i]].fullname
-
-                
+                Write-Progress -Id 0 -Activity "Removing $($a[$Found[$i]].name).." -PercentComplete $($i/($Found.length)*100)
                 try{
-                    #Remove-AppxPackage -Package $($a[$Found[$i]].PackageFullName) -ErrorAction Stop
-                    #Get-AppxPackage -User $global:username $a[$Found[$i]].PackageFullName
-                    Get-AppxPackage -User $global:username $a[$Found[$i]].Name | Remove-AppxPackage -ErrorAction Stop
+                    Get-AppxPackage -User $global:username -Name $a[$Found[$i]].Name | Remove-AppxPackage -ErrorAction Stop
                     
-	                display "The Package '$($a[$Found[$i]].Name -replace "\."," ")' has been successfully removed!"
+	                display "The Package '$($a[$Found[$i]].Name -replace "\."," ")' has been successfully removed (1)!"
                 }catch{
-                    display "The Package '$($a[$Found[$i]].Name -replace "\."," ")' could not be removed!" "Warning"
+                    try{
+                        if(Get-AppXProvisionedPackage -Online | Where-Object{$_.DisplayName -match $a[$Found[$i]].Name}){
+                            Get-AppXProvisionedPackage -Online | Where-Object{$_.DisplayName -match $a[$Found[$i]].Name} | Remove-AppxProvisionedPackage -Online -ErrorAction Stop
+                            display "The Package '$($a[$Found[$i]].Name -replace "\."," ")' has been successfully removed (2)!"
+                        }else{
+                            try{
+                                Get-ChildItem -Path "$($env:SystemDrive)\Users\$($global:username)\AppData\Local\Packages" | Where-Object {$_.Name -match $a[$Found[$i]].Name} | foreach{
+                                    Remove-Item $_.FullName -Recurse -Force -ErrorAction Stop
+                                    display "The Package '$($a[$Found[$i]].Name -replace "\."," ")' has been successfully removed from $($_.FullName) (3)!"
+                                }
+	                        }catch{
+                                display "The Package '$($a[$Found[$i]].Name -replace "\."," ")' could not be removed!" "Warning"
+                            }
+                        }
+                    }catch{
+                        try{
+                            Get-ChildItem -Path "$($env:SystemDrive)\Users\$($global:username)\AppData\Local\Packages" | Where-Object {$_.Name -match $a[$Found[$i]].Name} | foreach{
+                                Remove-Item $_.FullName -Recurse -Force -ErrorAction Stop
+                                display "The Package '$($a[$Found[$i]].Name -replace "\."," ")' has been successfully removed from $($_.FullName) (3)!"
+                            }
+	                    }catch{
+                            display "The Package '$($a[$Found[$i]].Name -replace "\."," ")' could not be removed!" "Warning"
+                        }
+                    }
                 }
 		    }
 	    }

@@ -32,7 +32,7 @@ $global:CleanApps_ResetApps=$false
 $global:CleanApps_SupressPrompt=$false
 $global:CleanApps_ListItem=
 @(
-    @("Bing Apps",$true,
+    @("Bing Apps",$false,
         @("Microsoft.BingFinance",$true),
         @("Microsoft.BingFoodAndDrink",$true),
         @("Microsoft.BingHealthAndFitness",$true),
@@ -40,26 +40,26 @@ $global:CleanApps_ListItem=
         @("Microsoft.BingSports",$true),
         @("Microsoft.BingTravel",$true)
     ),
-    @("help Apps",$true,
+    @("help Apps",$false,
         @("Microsoft.Getstarted",$true),
         @("Microsoft.WindowsFeedback",$true),
         @("Windows.ContactSupport",$true)
     ),
     @("useless Apps",$true,
-        @("Microsoft.3DBuilder",$true),
-        @("Microsoft.MicrosoftOfficeHub",$true),
+        @("Microsoft.3DBuilder",$false),
+        @("Microsoft.MicrosoftOfficeHub",$false),
         @("Microsoft.MicrosoftSolitaireCollection",$true),
         @("Microsoft.BioEnrollment",$false),
-        @("Microsoft.XboxGameCallableUI",$true),
-        @("Microsoft.XboxApp",$true),
-        @("Microsoft.WindowsReadingList",$true)
+        @("Microsoft.XboxGameCallableUI",$false),
+        @("Microsoft.XboxApp",$false),
+        @("Microsoft.WindowsReadingList",$false)
     ),
-    @("media Apps",$true,
+    @("media Apps",$false,
         @("Microsoft.ZuneMusic",$true),
         @("Microsoft.ZuneVideo",$true),
         @("Microsoft.WindowsDVDPlayer",$true)
     ),
-    @("oem ACER Apps",$true,
+    @("oem ACER Apps",$false,
         @("GAMELOFTSA.SharkDash",$true),
         @("WildTangentGames.-GamesApp-",$true),
         @("AcerIncorporated.AcerScrapboard",$true),
@@ -79,21 +79,21 @@ $global:CleanApps_ListItem=
         @("Microsoft.Studios.Wordament",$true),
         @("ZinioLLC.Zinio",$true)
     ),
-    @("conn App",$true,
+    @("conn App",$false,
         @("Microsoft.CommsPhone",$true),
         @("Microsoft.WindowsPhone",$true),
         @("Microsoft.ConnectivityStore",$true),
         @("microsoft.windowscommunicationsapps",$true),
         @("Microsoft.OneConnect",$true)
     ),
-    @("outlookApp",$true,
+    @("outlookApp",$false,
         @("Microsoft.People",$true)
     ),
-    @("work app",$true,
+    @("work app",$false,
         @("Microsoft.Office.OneNote",$false),
         @("Microsoft.Reader",$true)
     ),
-    @("basic app",$true,
+    @("basic app",$false,
         @("Microsoft.SkypeApp",$false),
         @("Microsoft.WindowsCamera",$true),
         @("Microsoft.Messaging",$false)
@@ -225,6 +225,9 @@ $global:RegistryChanges_ListItem=
         @("HKEY_CLASSES_ROOT\.pub\Publisher.Document.15\ShellNew",$true),
         @("HKEY_CLASSES_ROOT\.jnt\jntfile\ShellNew",$true),
         @("HKEY_CLASSES_ROOT\.rtf\ShellNew",$true),
+
+        @("HKEY_CLASSES_ROOT\SystemFileAssociations\.jpg\Shell\T3D Print",$true,"Remove Print with 3D Builder context menu 1"),
+        @("HKEY_CLASSES_ROOT\SystemFileAssociations\.png\Shell\T3D Print",$true,"Remove Print with 3D Builder context menu 2"),
 
         @("HKEY_CLASSES_ROOT\htmlfile\shell\print",$true),
         @("HKEY_CLASSES_ROOT\rtffile\shell\print",$true),
