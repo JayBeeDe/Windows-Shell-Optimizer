@@ -81,7 +81,7 @@ display "The script is begining!"
 if($global:module_CleanStartMenuItem){
     transfer $global:AllUserPath $global:UserStartMenuPath
     sortItem $global:UserStartMenuPath
-    iniWinX
+    #iniWinX
 }
 $global:StateError=$global:StateError+1000
 
@@ -108,7 +108,7 @@ if($global:module_RegistryCommandStore){
 }
 
 $global:StateError=$global:StateError+1000
-Stop-Process -Name "explorer" -Force
+#Stop-Process -Name "explorer" -Force
 
 display "The script has finished!"
 cd $global:currentLocation

@@ -12,8 +12,10 @@ $global:TranslateAccountKey="a9405b496e35440882154d696d71140c"
 $global:TranslateTokenURL="https://api.cognitive.microsoft.com/sts/v1.0/issueToken"
 $global:TranslateURL="https://api.microsofttranslator.com/v2/Http.svc/Translate"
 
-$global:module_CleanStartMenuItem=$false
-$global:CleanStartMenuItem_ExcludedFolder="Tool", "Accessor", "Startup"
+$global:module_CleanStartMenuItem=$true
+$global:CleanStartMenuItem_ExcludedFolder="Tool", "Accessor", "Startup", "Windows PowerShell"
+$global:CleanStartMenuItem_ExcludedItem="Help", "Uninstall", "Download Center", "Adobe Bridge", "Adobe ExtendScript Toolkit", "Adobe Extension Manager", "Brother"
+# It is important to set Windows PowerShell as excluded folder. Otherwise the WinX PowerShell shortcut will be broken!
 $global:CleanStartMenuItem_WinXItem=
 @(
     @("First Group",
@@ -32,7 +34,7 @@ $global:CleanApps_ResetApps=$false
 $global:CleanApps_SupressPrompt=$false
 $global:CleanApps_ListItem=
 @(
-    @("Bing Apps",$false,
+    @("Bing Apps",$true,
         @("Microsoft.BingFinance",$true),
         @("Microsoft.BingFoodAndDrink",$true),
         @("Microsoft.BingHealthAndFitness",$true),
@@ -40,26 +42,26 @@ $global:CleanApps_ListItem=
         @("Microsoft.BingSports",$true),
         @("Microsoft.BingTravel",$true)
     ),
-    @("help Apps",$false,
+    @("help Apps",$true,
         @("Microsoft.Getstarted",$true),
         @("Microsoft.WindowsFeedback",$true),
         @("Windows.ContactSupport",$true)
     ),
     @("useless Apps",$true,
-        @("Microsoft.3DBuilder",$false),
-        @("Microsoft.MicrosoftOfficeHub",$false),
+        @("Microsoft.3DBuilder",$true),
+        @("Microsoft.MicrosoftOfficeHub",$true),
         @("Microsoft.MicrosoftSolitaireCollection",$true),
-        @("Microsoft.BioEnrollment",$false),
-        @("Microsoft.XboxGameCallableUI",$false),
-        @("Microsoft.XboxApp",$false),
-        @("Microsoft.WindowsReadingList",$false)
+        @("Microsoft.BioEnrollment",$true),
+        @("Microsoft.XboxGameCallableUI",$true),
+        @("Microsoft.XboxApp",$true),
+        @("Microsoft.WindowsReadingList",$true)
     ),
-    @("media Apps",$false,
+    @("media Apps",$true,
         @("Microsoft.ZuneMusic",$true),
         @("Microsoft.ZuneVideo",$true),
         @("Microsoft.WindowsDVDPlayer",$true)
     ),
-    @("oem ACER Apps",$false,
+    @("oem ACER Apps",$true,
         @("GAMELOFTSA.SharkDash",$true),
         @("WildTangentGames.-GamesApp-",$true),
         @("AcerIncorporated.AcerScrapboard",$true),
@@ -79,17 +81,17 @@ $global:CleanApps_ListItem=
         @("Microsoft.Studios.Wordament",$true),
         @("ZinioLLC.Zinio",$true)
     ),
-    @("conn App",$false,
+    @("conn App",$true,
         @("Microsoft.CommsPhone",$true),
         @("Microsoft.WindowsPhone",$true),
         @("Microsoft.ConnectivityStore",$true),
         @("microsoft.windowscommunicationsapps",$true),
         @("Microsoft.OneConnect",$true)
     ),
-    @("outlookApp",$false,
+    @("outlookApp",$true,
         @("Microsoft.People",$true)
     ),
-    @("work app",$false,
+    @("work app",$true,
         @("Microsoft.Office.OneNote",$false),
         @("Microsoft.Reader",$true)
     ),
@@ -100,10 +102,10 @@ $global:CleanApps_ListItem=
     )
 )
 
-$global:module_RegistryChanges=$false
+$global:module_RegistryChanges=$true
 $global:RegistryChanges_ShowLogAlreadyDoneItems=$false #also apply to the RegistryCommandStore module
 $global:RegistryChanges_ListItem=
-@(#array must contains at least 2 sub arrays to works :) enjoy Mic!
+@(#array must contains at least 2 sub arrays to works
     @("Internet Explorer",$true,
         @("HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Internet Explorer\Restrictions",
         "NoHelpItemSendFeedback",1,$true,"Remove Send a smiley Button IE11")
@@ -127,18 +129,31 @@ $global:RegistryChanges_ListItem=
         @("HKEY_CLASSES_ROOT\Directory\Background\shellex\ContextMenuHandlers\igfxDTCM",$true)
     ),
     @("Explorer Namespaces",$false,
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{1CF1260C-4DD0-4ebb-811F-33C572699FDE}",$true),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{3dfdf296-dbec-4fb4-81d1-6a3438bcf4de}",$true),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{1CF1260C-4DD0-4ebb-811F-33C572699FDE}",$true),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{3dfdf296-dbec-4fb4-81d1-6a3438bcf4de}",$true),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{3ADD1653-EB32-4cb0-BBD7-DFA0ABB5ACCA}",$true),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{24ad3ad4-a569-4530-98e1-ab02f9417aa8}",$true),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{3ADD1653-EB32-4cb0-BBD7-DFA0ABB5ACCA}",$true),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{24ad3ad4-a569-4530-98e1-ab02f9417aa8}",$true),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{A0953C92-50DC-43bf-BE83-3742FED03C9C}",$true),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{f86fa3ab-70d2-4fc7-9c99-fcbf05467f3a}",$true),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{A0953C92-50DC-43bf-BE83-3742FED03C9C}",$true),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{f86fa3ab-70d2-4fc7-9c99-fcbf05467f3a}",$true)
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{B4BFCC3A-DB2C-424C-B029-7FE99A87C641}",$false,"Remove Desktop namespace 1/2"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{B4BFCC3A-DB2C-424C-B029-7FE99A87C641}",$false,"Remove Desktop namespace 2/2"),
+
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{A8CDFF1C-4878-43be-B5FD-F8091C1C60D0}}",$false,"Remove Documents namespace 1/4"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{d3162b92-9365-467a-956b-92703aca08af}",$false,"Remove Documents namespace 2/4"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{374DE290-123F-4565-9164-39C4925E467B}",$false,"Remove Documents namespace 3/4"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{088e3905-0323-4b02-9826-5d99428e115f}",$false,"Remove Documents namespace 4/4"),
+        
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{374DE290-123F-4565-9164-39C4925E467B}",$false,"Remove Download namespace 1/4"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{088e3905-0323-4b02-9826-5d99428e115f}",$false,"Remove Download namespace 2/4"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{A8CDFF1C-4878-43be-B5FD-F8091C1C60D0}",$false,"Remove Download namespace 3/4"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{d3162b92-9365-467a-956b-92703aca08af}",$false,"Remove Download namespace 4/4"),
+
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{1CF1260C-4DD0-4ebb-811F-33C572699FDE}",$true,"Remove Music namespace 1/4"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{3dfdf296-dbec-4fb4-81d1-6a3438bcf4de}",$true,"Remove Music namespace 2/4"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{1CF1260C-4DD0-4ebb-811F-33C572699FDE}",$true,"Remove Music namespace 3/4"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{3dfdf296-dbec-4fb4-81d1-6a3438bcf4de}",$true,"Remove Music namespace 4/4"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{3ADD1653-EB32-4cb0-BBD7-DFA0ABB5ACCA}",$true,"Remove Picture namespace 1/4"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{24ad3ad4-a569-4530-98e1-ab02f9417aa8}",$true,"Remove Picture namespace 2/4"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{3ADD1653-EB32-4cb0-BBD7-DFA0ABB5ACCA}",$true,"Remove Picture namespace 3/4"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{24ad3ad4-a569-4530-98e1-ab02f9417aa8}",$true,"Remove Picture namespace 4/4"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{A0953C92-50DC-43bf-BE83-3742FED03C9C}",$true,"Remove Videos namespace 1/4"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{f86fa3ab-70d2-4fc7-9c99-fcbf05467f3a}",$true,"Remove Videos namespace 2/4"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{A0953C92-50DC-43bf-BE83-3742FED03C9C}",$true,"Remove Videos namespace 3/4"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{f86fa3ab-70d2-4fc7-9c99-fcbf05467f3a}",$true,"Remove Videos namespace 4/4")
     ),
     @("Desktop Others",$true,
         @("HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System",
@@ -225,6 +240,12 @@ $global:RegistryChanges_ListItem=
         @("HKEY_CLASSES_ROOT\.pub\Publisher.Document.15\ShellNew",$true),
         @("HKEY_CLASSES_ROOT\.jnt\jntfile\ShellNew",$true),
         @("HKEY_CLASSES_ROOT\.rtf\ShellNew",$true),
+        @("HKEY_CLASSES_ROOT\.psd\ShellNew",$true),
+        @("HKEY_CLASSES_ROOT\.pub\Publisher.Document.16\ShellNew",$true),
+        @("HKEY_CLASSES_ROOT\.accdb\Access.Application.16\ShellNew",$true),
+        @("HKEY_CLASSES_ROOT\.mdb\ShellNew",$true),
+        @("HKEY_CLASSES_ROOT\.psd\ShellNew",$true),
+        @("HKEY_CLASSES_ROOT\.psd\ShellNew",$true),
 
         @("HKEY_CLASSES_ROOT\SystemFileAssociations\.jpg\Shell\T3D Print",$true,"Remove Print with 3D Builder context menu 1"),
         @("HKEY_CLASSES_ROOT\SystemFileAssociations\.png\Shell\T3D Print",$true,"Remove Print with 3D Builder context menu 2"),
@@ -241,8 +262,14 @@ $global:RegistryChanges_ListItem=
         @("HKEY_CLASSES_ROOT\AllFilesystemObjects\shellex\ContextMenuHandlers\Send To",$true),
         @("HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer","NoDrivesInSendToMenu",1,$true),
 
+        @("HKEY_CLASSES_ROOT\exefile\shell\ResourceHacker",$true,"Remove Ressource Hacker contextual menu"),
+
         @("HKEY_CLASSES_ROOT\exefile\shellex\ContextMenuHandlers\Compatibility",$true,"Remove Troubleshooting compatibility 1/2"),
         @("HKEY_CLASSES_ROOT\lnkfile\shellex\ContextMenuHandlers\Compatibility",$true,"Remove Troubleshooting compatibility 2/2"),
+        
+        @("HKEY_CLASSES_ROOT\*\shellex\ContextMenuHandlers\EPP",$true,"Remove Scan With Windows Defender 1/3"),
+        @("HKEY_CLASSES_ROOT\Directory\shellex\ContextMenuHandlers\EPP",$true,"Remove Scan With Windows Defender 2/3"),
+        @("HKEY_CLASSES_ROOT\Drive\shellex\ContextMenuHandlers\EPP",$true,"Remove Scan With Windows Defender 3/3"),
 
         @("HKEY_CLASSES_ROOT\*\shellex\ContextMenuHandlers\Sharing",$true),
         @("HKEY_CLASSES_ROOT\Directory\Background\shellex\ContextMenuHandlers\Sharing",$true),
@@ -251,7 +278,6 @@ $global:RegistryChanges_ListItem=
         @("HKEY_CLASSES_ROOT\Drive\shellex\ContextMenuHandlers\Sharing",$true),
         @("HKEY_CLASSES_ROOT\LibraryFolder\background\shellex\ContextMenuHandlers\Sharing",$true),
         @("HKEY_CLASSES_ROOT\UserLibraryFolder\shellex\ContextMenuHandlers\Sharing",$true),
-
 
         @("HKEY_CLASSES_ROOT\*\shellex\ContextMenuHandlers\EPP",$true),
         @("HKEY_CLASSES_ROOT\Directory\shellex\ContextMenuHandlers\EPP",$true),
@@ -299,6 +325,11 @@ $global:RegistryChanges_ListItem=
         "MenuIcons",0,$true,""),
         @("HKEY_CLASSES_ROOT\Drive\shellex\DragDropHandlers\7-Zip",$true,"RemoveBuiltinContextual"),
         @("HKEY_CLASSES_ROOT\CompressedFolder\ShellEx\ContextMenuHandlers\{b8cdcb65-b1bf-4b42-9428-1dfdb7ee92af}",$true,"RemoveBuiltinContextual")
+    ),
+    @("Multimedia",$true,
+        @("HKEY_CLASSES_ROOT\Directory\shell\AddToPlaylistVLC",$true,"Remove Add To playlist VLC for directory"),
+        @("HKEY_CLASSES_ROOT\Directory\shell\PlayWithVLC",$true,"Remove Play With VLC for directory"),
+        @("HKEY_CLASSES_ROOT\AudioCD\shell\play",$true,"Remove Play With Windows Media Player")
     ),
     @("Navigation Pane",$true,
         @("HKEY_CURRENT_USER\SOFTWARE\Classes\CLSID\{031E4825-7B94-4dc3-B131-E946B44C8DD5}",

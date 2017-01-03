@@ -1,4 +1,5 @@
-﻿#this page contains all the shared functions and modules
+﻿Exit
+#this page contains all the shared functions and modules
 
 function display($msg, $type = "Information", $disableLog = $false){
     if($type -eq "Error"){
@@ -42,8 +43,10 @@ function translate($text,$revert){
 
     if($revert -eq $true){
         $toLang="en"
+        $fromLang=$global:systemLanguage
     }else{
         $toLang=$global:systemLanguage
+        $fromLang="en"
     }
 
     $listEscape=[System.Collections.ArrayList]@()
@@ -56,7 +59,6 @@ function translate($text,$revert){
     
         $auth="Bearer "+$token
         $header=@{Authorization=$auth}
-        $fromLang="en"
 
         $uri=$global:TranslateURL+"?text="+[System.Web.HttpUtility]::UrlEncode($tmpText)+"&from="+$fromLang+"&to="+$toLang+"&contentType=text/plain"
 
@@ -107,11 +109,12 @@ function sortItem($currPath, $oldPath){
                 Remove-Item -Path $_.FullName -Recurse -Force
             }
         }else{
-            if(!($_.Name -match "\.lnk$")){
+            if((!($_.Name -match "\.lnk$" -Or $_.Name -match "\.appref-ms$")) -Or (checkInList $_.Name $global:CleanStartMenuItem_ExcludedItem)){
                 Remove-Item -Path $_.FullName -Force
-            }
-            if($oldPath -ne $null -and $_.Name -match "\.lnk$"){
-                Move-Item -Path $_.FullName -Destination $oldPath -Force
+            }else{
+                if($oldPath -ne $null){
+                    Move-Item -Path $_.FullName -Destination $oldPath -Force
+                }
             }
         }
     }
@@ -119,11 +122,11 @@ function sortItem($currPath, $oldPath){
 
 function checkInList($item, $list){
     if($global:systemLanguage -ne "en"){
-        $item=translate $item $true
+        $translatedItem=translate $item $true
     }
     $ret=$false
     $list | foreach{
-        if($item -match ".*$($_).*"){
+        if($item -match ".*$($_).*" -Or $translatedItem -match ".*$($_).*"){
             $ret=$true
         }
     }
@@ -147,8 +150,8 @@ function createShortcut($path,$name,$target,$args2){
 }
 
 function iniWinX(){
-    Remove-Item -Path "$($path)\*" -Recurse -Force | Out-Null
-
+    Remove-Item -Path "$($global:UserWinXPath)\*" -Recurse -Force | Out-Null
+    
     For ($i=0; $i -lt $global:CleanStartMenuItem_WinXItem.length; $i++){
         if($i -lt 3){
             $group="Group$($i+1)"
@@ -214,8 +217,8 @@ function removeApps(){
 
     For ($i=0; $i -lt $global:CleanApps_ListItem.length; $i++) {
 
-        Write-Progress -Id 0 -Activity "Searching for default apps to unistall.." `
-        -Status "$([math]::Round(($i/($global:CleanApps_ListItem.length-1)*100),2)) % - $($Found.Length) item(s) found" `
+        Write-Progress -Id 0 -Activity $(translate "Searching for default apps to unistall..") `
+        -Status "$([math]::Round(($i/($global:CleanApps_ListItem.length-1)*100),2)) % - $($Found.Length) $(translate "item(s) found")" `
         -PercentComplete $($i/($global:CleanApps_ListItem.length-1)*100)
         
         if($global:CleanApps_ListItem[$i][1] -ne $false){
@@ -272,7 +275,7 @@ function removeApps(){
         }
 	    if ($answ -ieq "Y" -or $answ -eq "") {
 		    for ($i=0; $i -lt $Found.length; $i++) {
-                Write-Progress -Id 0 -Activity "Removing $($a[$Found[$i]].name).." -PercentComplete $($i/($Found.length)*100)
+                Write-Progress -Id 0 -Activity $(translate "Removing $($a[$Found[$i]].name)..") -PercentComplete $($i/($Found.length)*100)
                 try{
                     Get-AppxPackage -User $global:username -Name $a[$Found[$i]].Name | Remove-AppxPackage -ErrorAction Stop
                     
@@ -280,7 +283,7 @@ function removeApps(){
                 }catch{
                     try{
                         if(Get-AppXProvisionedPackage -Online | Where-Object{$_.DisplayName -match $a[$Found[$i]].Name}){
-                            Get-AppXProvisionedPackage -Online | Where-Object{$_.DisplayName -match $a[$Found[$i]].Name} | Remove-AppxProvisionedPackage -Online -ErrorAction Stop
+                            Get-AppXProvisionedPackage -Online | Where-Object{$_.DisplayName -match $a[$Found[$i]].Name} | Remove-AppxProvisionedPackage -Online -ErrorAction Stop | Out-Null
                             display "The Package '$($a[$Found[$i]].Name -replace "\."," ")' has been successfully removed (2)!"
                         }else{
                             try{
@@ -314,8 +317,8 @@ function KeyChanges(){
 #function that read and call the registry changes with SetRegistryKey($keyPath,$itemAction="DELETE",$value)
     For($i=0; $i -lt $global:RegistryChanges_ListItem.length; $i++){
 
-        Write-Progress -Id 0 -Activity "Changing and Removing Keys..." `
-        -Status "$([math]::Round(($i/($global:RegistryChanges_ListItem.length-1)*100),2)) % - Working on group $($global:RegistryChanges_ListItem[$i][0])" `
+        Write-Progress -Id 0 -Activity $(translate "Changing and Removing Keys...") `
+        -Status "$([math]::Round(($i/($global:RegistryChanges_ListItem.length-1)*100),2)) % - $(translate "Working on group") $($global:RegistryChanges_ListItem[$i][0])" `
         -PercentComplete $($i/($global:RegistryChanges_ListItem.length-1)*100)
 
         if($global:RegistryChanges_ListItem[$i][1] -eq $true){
@@ -341,8 +344,8 @@ function CommandStore(){
 
     For($i=0; $i -lt $global:RegistryCommandStore_ListItem.length; $i++){
 
-        Write-Progress -Id 0 -Activity "Changing Explorer Command Store Settings..." `
-        -Status "$([math]::Round(($i/($global:RegistryCommandStore_ListItem.length-1)*100),2)) % - Working on group $($global:RegistryCommandStore_ListItem[$i][0])" `
+        Write-Progress -Id 0 -Activity $(translate "Changing Explorer Command Store Settings...") `
+        -Status "$([math]::Round(($i/($global:RegistryCommandStore_ListItem.length-1)*100),2)) % - $(translate "Working on group") $($global:RegistryCommandStore_ListItem[$i][0])" `
         -PercentComplete $($i/($global:RegistryCommandStore_ListItem.length-1)*100)
         
 
@@ -521,7 +524,7 @@ Function SetPermissions($key){
         $keyArr=$null
         $keyArr=$key.split("\")
         if($keyArr.Length -le 2){
-            throw "The key $($key) could not be found, sorry"
+            throw "The registry key '$($key)' could not be found, sorry"
             break
         }
         $key=$keyArr[0..($keyArr.Length-2)] -join "\"
@@ -577,9 +580,9 @@ Function SetRegistryKey($keyPath,$itemAction="DELETE",$value){
                     removeKey $key.Name -ErrorAction Stop
                 }catch{
                     if($flag -eq $true){
-                        display "Error while changing permissions on $($key.Name)" "Warning"
+                        display "Error while changing permissions on '$($key.Name)'" "Warning"
                     }else{
-                        display "Error while removing key $($key.Name)" "Warning"
+                        display "Error while removing registry key '$($key.Name)'" "Warning"
                     }
                 }
             }
@@ -597,12 +600,12 @@ Function SetRegistryKey($keyPath,$itemAction="DELETE",$value){
         if(Test-Path -LiteralPath "$($global:prefix)$($keyPath)"){
             try{
                 removeKey $keyPath -ErrorAction Stop
-                display "The key '$($keyPath)' and its subkeys have been successfully removed!"
+                display "The registry key '$($keyPath)' and its subkeys have been successfully removed!"
             }catch{
                 if($flag -eq $true){
                     display "Master error while changing permissions on '$($keyPath)'" "Warning"
                 }else{
-                    display "Master error while removing key '$($keyPath)'" "Warning"
+                    display "Master error while removing registry key '$($keyPath)'" "Warning"
                 }
             }
         }else{
