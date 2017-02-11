@@ -12,7 +12,7 @@ $global:TranslateAccountKey="a9405b496e35440882154d696d71140c"
 $global:TranslateTokenURL="https://api.cognitive.microsoft.com/sts/v1.0/issueToken"
 $global:TranslateURL="https://api.microsofttranslator.com/v2/Http.svc/Translate"
 
-$global:module_CleanStartMenuItem=$true
+$global:module_CleanStartMenuItem=$false
 $global:CleanStartMenuItem_ExcludedFolder="Tool", "Accessor", "Startup", "Windows PowerShell"
 $global:CleanStartMenuItem_ExcludedItem="Help", "Uninstall", "Download Center", "Adobe Bridge", "Adobe ExtendScript Toolkit", "Adobe Extension Manager", "Brother"
 # It is important to set Windows PowerShell as excluded folder. Otherwise the WinX PowerShell shortcut will be broken!
@@ -28,7 +28,7 @@ $global:CleanStartMenuItem_WinXItem=
     )
 )
 
-$global:module_CleanApps=$true
+$global:module_CleanApps=$false
 #Set to false if not Windows 10
 $global:CleanApps_ResetApps=$false
 $global:CleanApps_SupressPrompt=$false
@@ -387,17 +387,16 @@ $global:RegistryChanges_ListItem=
         @("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ SkyDrivePro2 (SyncInProgress)",$true,"SkydrivePro (Sharepoint)"),
         @("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ SkyDrivePro3 (InSync)",$true,"SkydrivePro (Sharepoint)"),
 
-        
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\DropboxExt1",$true,"Dropbox"),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\DropboxExt2",$true,"Dropbox"),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\DropboxExt3",$true,"Dropbox"),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\DropboxExt4",$true,"Dropbox"),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\DropboxExt5",$true,"Dropbox"),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\DropboxExt6",$true,"Dropbox"),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\DropboxExt7",$true,"Dropbox"),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\DropboxExt8",$true,"Dropbox"),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\DropboxExt9",$true,"Dropbox"),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\DropboxExt10",$true,"Dropbox"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ DropboxExt1",$true,"Dropbox"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ DropboxExt2",$true,"Dropbox"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ DropboxExt3",$true,"Dropbox"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ DropboxExt4",$true,"Dropbox"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ DropboxExt5",$true,"Dropbox"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ DropboxExt6",$true,"Dropbox"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ DropboxExt7",$true,"Dropbox"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ DropboxExt8",$true,"Dropbox"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ DropboxExt9",$true,"Dropbox"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ DropboxExt10",$true,"Dropbox"),
         @("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\DropboxExt1",$true,"Dropbox"),
         @("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\DropboxExt2",$true,"Dropbox"),
         @("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\DropboxExt3",$true,"Dropbox"),

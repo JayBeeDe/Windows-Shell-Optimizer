@@ -1,5 +1,4 @@
-﻿Exit
-#this page contains all the shared functions and modules
+﻿#this page contains all the shared functions and modules
 
 function display($msg, $type = "Information", $disableLog = $false){
     if($type -eq "Error"){
