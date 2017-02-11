@@ -12,9 +12,10 @@ $global:TranslateAccountKey="a9405b496e35440882154d696d71140c"
 $global:TranslateTokenURL="https://api.cognitive.microsoft.com/sts/v1.0/issueToken"
 $global:TranslateURL="https://api.microsofttranslator.com/v2/Http.svc/Translate"
 
-$global:module_CleanStartMenuItem=$false
+$global:module_CleanStartMenuItem=$true
 $global:CleanStartMenuItem_ExcludedFolder="Tool", "Accessor", "Startup", "Windows PowerShell"
-$global:CleanStartMenuItem_ExcludedItem="Help", "Uninstall", "Download Center", "Adobe Bridge", "Adobe ExtendScript Toolkit", "Adobe Extension Manager", "Brother"
+$global:CleanStartMenuItem_ExcludedItem="Help", "Uninstall", "Download Center", "Adobe Bridge", "Adobe ExtendScript Toolkit", "Adobe Extension Manager", "Brother", "skinned", "About", "Check", "Configure", "\.url", "\.txt", "Preference", "Forum", "HomePage", "License", "Documentation", "Website", "Magnify", "Narrator", "Silverlight"
+
 # It is important to set Windows PowerShell as excluded folder. Otherwise the WinX PowerShell shortcut will be broken!
 $global:CleanStartMenuItem_WinXItem=
 @(
@@ -28,7 +29,7 @@ $global:CleanStartMenuItem_WinXItem=
     )
 )
 
-$global:module_CleanApps=$false
+$global:module_CleanApps=$true
 #Set to false if not Windows 10
 $global:CleanApps_ResetApps=$false
 $global:CleanApps_SupressPrompt=$false
@@ -128,7 +129,7 @@ $global:RegistryChanges_ListItem=
         @("HKEY_CLASSES_ROOT\Directory\Background\shellex\ContextMenuHandlers\igfxcui",$true),
         @("HKEY_CLASSES_ROOT\Directory\Background\shellex\ContextMenuHandlers\igfxDTCM",$true)
     ),
-    @("Explorer Namespaces",$false,
+    @("Explorer Namespaces",$true,
         @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{B4BFCC3A-DB2C-424C-B029-7FE99A87C641}",$false,"Remove Desktop namespace 1/2"),
         @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{B4BFCC3A-DB2C-424C-B029-7FE99A87C641}",$false,"Remove Desktop namespace 2/2"),
 
@@ -246,6 +247,9 @@ $global:RegistryChanges_ListItem=
         @("HKEY_CLASSES_ROOT\.mdb\ShellNew",$true),
         @("HKEY_CLASSES_ROOT\.psd\ShellNew",$true),
         @("HKEY_CLASSES_ROOT\.psd\ShellNew",$true),
+        @("HKEY_CLASSES_ROOT\.vsdx\Visio.Drawing.15\ShellNew",$true),
+        @("HKEY_CLASSES_ROOT\.kep\ShellNew",$true),
+        @("HKEY_CLASSES_ROOT\.sap\SAPGui.Shortcut.File\ShellNew",$true),
 
         @("HKEY_CLASSES_ROOT\SystemFileAssociations\.jpg\Shell\T3D Print",$true,"Remove Print with 3D Builder context menu 1"),
         @("HKEY_CLASSES_ROOT\SystemFileAssociations\.png\Shell\T3D Print",$true,"Remove Print with 3D Builder context menu 2"),
