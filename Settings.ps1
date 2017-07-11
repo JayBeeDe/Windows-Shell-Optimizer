@@ -2,7 +2,7 @@
 
 $global:StateError=0
 $global:logName="Application"
-$global:logSource="Qloudwise AD Script 2"
+$global:logSource="Installation"
 
 $global:AllUserPath="$($env:SystemDrive)\ProgramData\Microsoft\Windows\Start Menu\Programs"
 $global:UserStartMenuPath="$($global:userPath)\AppData\Roaming\Microsoft\Windows\Start Menu\Programs"
@@ -12,7 +12,7 @@ $global:TranslateAccountKey="a9405b496e35440882154d696d71140c"
 $global:TranslateTokenURL="https://api.cognitive.microsoft.com/sts/v1.0/issueToken"
 $global:TranslateURL="https://api.microsofttranslator.com/v2/Http.svc/Translate"
 
-$global:module_CleanStartMenuItem=$true
+$global:module_CleanStartMenuItem=$false
 $global:CleanStartMenuItem_ExcludedFolder="Tool", "Accessor", "Startup", "Windows PowerShell"
 $global:CleanStartMenuItem_ExcludedItem="Help", "Uninstall", "Download Center", "Adobe Bridge", "Adobe ExtendScript Toolkit", "Adobe Extension Manager", "Brother", "skinned", "About", "Check", "Configure", "\.url", "\.txt", "Preference", "Forum", "HomePage", "License", "Documentation", "Website", "Magnify", "Narrator", "Silverlight"
 
@@ -29,81 +29,106 @@ $global:CleanStartMenuItem_WinXItem=
     )
 )
 
-$global:module_CleanApps=$true
+$global:module_Apps=$true
 #Set to false if not Windows 10
-$global:CleanApps_ResetApps=$false
-$global:CleanApps_SupressPrompt=$false
-$global:CleanApps_ListItem=
+$global:Apps_ResetApps=$false
+$global:Apps_SupressPrompt=$false
+$global:Apps_InstallerDirectory="D:\Downloads\"
+$global:Apps_MaxTimeOut=40
+
+#executable path install/uninstall n/installExeAndSwitch [winr] enable [name]
+#"app" "full or partial name" install/uninstall [winr] enable [name]
+
+
+$global:Apps_ProfileFooter=
 @(
+    #array must contains at least 2 sub arrays to works
+    @("Set-PSReadlineOption -BellStyle None", $true, "disable bell when hiting return key"),
+    @("Add-PSSnapin WASP", $true, "load usefull addins (Windows 10 only!)"),
+    @("Set-Location $env:SystemDrive\", $true, "Go to C:\"),
+    @("Set-Alias ip 'Get-NetIPConfiguration'", $true, "set alias for get net Get-NetIPConfiguration"),
+    @("Set-Alias man 'Get-Help --examples'", $true, "set alias for manual"),
+    @("Clear-Host", $true, "")
+)
+$global:Apps_ProfileAdminUser="Administrateur"
+$global:Apps_ProfileAdminPassword="lol"
+
+$global:Apps_ListItem=
+@(
+    @("Win32 Apps",$true,
+        #@("7-Zip","7z1700-x64.msi","/S","7z",$true,$true),
+        @("7-Zip","7zip\7z1604-x64.exe","/S","7z",$true,$true),
+        @("VLC","VLC\vlc-2.2.6-win32.exe","/S","$($env:SystemDrive)\Program Files (x86)\VideoLAN\VLC","vlc","$($global:userPath)\AppData\Roaming\vlc",$true,$true)
+    ),
     @("Bing Apps",$true,
-        @("Microsoft.BingFinance",$true),
-        @("Microsoft.BingFoodAndDrink",$true),
-        @("Microsoft.BingHealthAndFitness",$true),
-        @("Microsoft.BingNews",$true),
-        @("Microsoft.BingSports",$true),
-        @("Microsoft.BingTravel",$true)
+        @("app","test",$false,$true),
+        @("app","Microsoft.BingFinance",$false,$true),
+        @("app","Microsoft.BingFoodAndDrink",$false,$true),
+        @("app","Microsoft.BingHealthAndFitness",$false,$true),
+        @("app","Microsoft.BingNews",$false,$true),
+        @("app","Microsoft.BingSports",$false,$true),
+        @("app","Microsoft.BingTravel",$false,$true)
     ),
     @("help Apps",$true,
-        @("Microsoft.Getstarted",$true),
-        @("Microsoft.WindowsFeedback",$true),
-        @("Windows.ContactSupport",$true)
+        @("app","Microsoft.Getstarted",$false,$true),
+        @("app","Microsoft.WindowsFeedback",$false,$true),
+        @("app","Windows.ContactSupport",$false,$true)
     ),
     @("useless Apps",$true,
-        @("Microsoft.3DBuilder",$true),
-        @("Microsoft.MicrosoftOfficeHub",$true),
-        @("Microsoft.MicrosoftSolitaireCollection",$true),
-        @("Microsoft.BioEnrollment",$true),
-        @("Microsoft.XboxGameCallableUI",$true),
-        @("Microsoft.XboxApp",$true),
-        @("Microsoft.WindowsReadingList",$true)
+        @("app","Microsoft.3DBuilder",$false,$true),
+        @("app","Microsoft.MicrosoftOfficeHub",$false,$true),
+        @("app","Microsoft.MicrosoftSolitaireCollection",$false,$true),
+        @("app","Microsoft.BioEnrollment",$false,$true),
+        @("app","Microsoft.XboxGameCallableUI",$false,$true),
+        @("app","Microsoft.XboxApp",$false,$true),
+        @("app","Microsoft.WindowsReadingList",$false,$true)
     ),
-    @("media Apps",$true,
-        @("Microsoft.ZuneMusic",$true),
-        @("Microsoft.ZuneVideo",$true),
-        @("Microsoft.WindowsDVDPlayer",$true)
+    @("media Apps",$false,
+        @("app","Microsoft.ZuneMusic",$false,$true),
+        @("app","Microsoft.ZuneVideo",$false,$true),
+        @("app","Microsoft.WindowsDVDPlayer",$false,$true)
     ),
-    @("oem ACER Apps",$true,
-        @("GAMELOFTSA.SharkDash",$true),
-        @("WildTangentGames.-GamesApp-",$true),
-        @("AcerIncorporated.AcerScrapboard",$true),
-        @("7digitalLtd.7digitalMusicStore",$true),
-        @("AccuWeather.AccuWeatherforWindows8",$true),
-        @("AudialsAG.AudialsRadio",$true),
-        @("4AE8B7C2.Booking.comPartnerEdition",$true),
-        @("6617GergelyOrosz.Calc8",$true),
-        @("JoyBits-Ltd.DoodleGodFreePlus",$true),
-        @("eBayInc.eBay",$true),
-        @("Evernote.Evernote",$true),
-        @("Evernote.Skitch",$true),
-        @("MAGIX.MusicMakerJam",$true),
-        @("CANALGroupe.CANALTOUCH",$true),
-        @("esobiIncorporated.newsXpressoMetro",$true),
-        @("txtr.txtrReader",$true),
-        @("Microsoft.Studios.Wordament",$true),
-        @("ZinioLLC.Zinio",$true)
+    @("oem ACER Apps",$false,
+        @("app","GAMELOFTSA.SharkDash",$false,$true),
+        @("app","WildTangentGames.-GamesApp-,$false",$true),
+        @("app","AcerIncorporated.AcerScrapboard",$false,$true),
+        @("app","7digitalLtd.7digitalMusicStore",$false,$true),
+        @("app","AccuWeather.AccuWeatherforWindows8",$false,$true),
+        @("app","AudialsAG.AudialsRadio",$false,$true),
+        @("app","4AE8B7C2.Booking.comPartnerEdition",$false,$true),
+        @("app","6617GergelyOrosz.Calc8",$false,$true),
+        @("app","JoyBits-Ltd.DoodleGodFreePlus",$false,$true),
+        @("app","eBayInc.eBay",$false,$true),
+        @("app","Evernote.Evernote",$false,$true),
+        @("app","Evernote.Skitch",$false,$true),
+        @("app","MAGIX.MusicMakerJam",$false,$true),
+        @("app","CANALGroupe.CANALTOUCH",$false,$true),
+        @("app","esobiIncorporated.newsXpressoMetro",$false,$true),
+        @("app","txtr.txtrReader",$false,$true),
+        @("app","Microsoft.Studios.Wordament",$false,$true),
+        @("app","ZinioLLC.Zinio",$false,$true)
     ),
-    @("conn App",$true,
-        @("Microsoft.CommsPhone",$true),
-        @("Microsoft.WindowsPhone",$true),
-        @("Microsoft.ConnectivityStore",$true),
-        @("microsoft.windowscommunicationsapps",$true),
-        @("Microsoft.OneConnect",$true)
+    @("conn App",$false,
+        @("app","Microsoft.CommsPhone",$false,$true),
+        @("app","Microsoft.WindowsPhone",$false,$true),
+        @("app","Microsoft.ConnectivityStore",$false,$true),
+        @("app","microsoft.windowscommunicationsapps",$false,$true),
+        @("app","Microsoft.OneConnect",$false,$true)
     ),
-    @("outlookApp",$true,
-        @("Microsoft.People",$true)
+    @("outlookApp",$false,
+        @("app","Microsoft.People",$false,$true)
     ),
-    @("work app",$true,
-        @("Microsoft.Office.OneNote",$false),
-        @("Microsoft.Reader",$true)
+    @("work app",$false,
+        @("app","Microsoft.Office.OneNote",$false,$false),
+        @("app","Microsoft.Reader",$false,$true)
     ),
     @("basic app",$false,
-        @("Microsoft.SkypeApp",$false),
-        @("Microsoft.WindowsCamera",$true),
-        @("Microsoft.Messaging",$false)
+        @("app","Microsoft.SkypeApp",$false,$false),
+        @("app","Microsoft.WindowsCamera",$false,$true),
+        @("app","Microsoft.Messaging",$false,$false)
     )
 )
-
-$global:module_RegistryChanges=$true
+$global:module_RegistryChanges=$false
 $global:RegistryChanges_ShowLogAlreadyDoneItems=$false #also apply to the RegistryCommandStore module
 $global:RegistryChanges_ListItem=
 @(#array must contains at least 2 sub arrays to works
@@ -122,6 +147,115 @@ $global:RegistryChanges_ListItem=
         "VerboseStatus",1,$true,"Enable verbose mode"),
         @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System",
         "EnableFirstLogonAnimation",0,$true,"Disable user First Signin Animation")
+    ),
+    @("Command Prompt",$true,
+        @("HKEY_CURRENT_USER\Console","ColorTable00","00000000",$true),
+        @("HKEY_CURRENT_USER\Console","ColorTable01","00800000",$true),
+        @("HKEY_CURRENT_USER\Console","ColorTable02","00008000",$true),
+        @("HKEY_CURRENT_USER\Console","ColorTable03","00808000",$true),
+        @("HKEY_CURRENT_USER\Console","ColorTable04","00000080",$true),
+        @("HKEY_CURRENT_USER\Console","ColorTable05","00800080",$true),
+        @("HKEY_CURRENT_USER\Console","ColorTable06","00008080",$true),
+        @("HKEY_CURRENT_USER\Console","ColorTable07","00c0c0c0",$true),
+        @("HKEY_CURRENT_USER\Console","ColorTable08","00808080",$true),
+        @("HKEY_CURRENT_USER\Console","ColorTable09","00ff0000",$true),
+        @("HKEY_CURRENT_USER\Console","ColorTable10","0000ff00",$true),
+        @("HKEY_CURRENT_USER\Console","ColorTable11","00ffff00",$true),
+        @("HKEY_CURRENT_USER\Console","ColorTable12","000000ff",$true),
+        @("HKEY_CURRENT_USER\Console","ColorTable13","00ff00ff",$true),
+        @("HKEY_CURRENT_USER\Console","ColorTable14","0000ffff",$true),
+        @("HKEY_CURRENT_USER\Console","ColorTable15","00ffffff",$true),
+        @("HKEY_CURRENT_USER\Console","CtrlKeyShortcutsDisabled","00000000",$true),
+        @("HKEY_CURRENT_USER\Console","CursorSize","00000019",$true),
+        @("HKEY_CURRENT_USER\Console","EnableColorSelection","00000000",$true),
+        @("HKEY_CURRENT_USER\Console","ExtendedEditKeyCustom","00000000",$true),
+        @("HKEY_CURRENT_USER\Console","FilterOnPaste","00000001",$true),
+        @("HKEY_CURRENT_USER\Console","ForceV2","00000001",$true),
+        @("HKEY_CURRENT_USER\Console","FullScreen","00000000",$true),
+        @("HKEY_CURRENT_USER\Console","HistoryBufferSize","00000032",$true),
+        @("HKEY_CURRENT_USER\Console","HistoryNoDup","00000000",$true),
+        @("HKEY_CURRENT_USER\Console","InsertMode","00000001",$true),
+        @("HKEY_CURRENT_USER\Console","LineSelection","00000001",$true),
+        @("HKEY_CURRENT_USER\Console","LineWrap","00000001",$true),
+        @("HKEY_CURRENT_USER\Console","LoadConIme","00000001",$true),
+        @("HKEY_CURRENT_USER\Console","NumberOfHistoryBuffers","00000004",$true),
+        @("HKEY_CURRENT_USER\Console","PopupColors","000000f5",$true),
+        @("HKEY_CURRENT_USER\Console","ScreenColors","00000007",$true),
+        @("HKEY_CURRENT_USER\Console","ScrollScale","00000001",$true),
+        @("HKEY_CURRENT_USER\Console","TrimLeadingZeros","00000000",$true),
+        @("HKEY_CURRENT_USER\Console","WindowAlpha","000000ff",$true),
+        @("HKEY_CURRENT_USER\Console","WordDelimiters","00000000",$true),
+        @("HKEY_CURRENT_USER\Console","FontFamily","00000036",$true),
+        @("HKEY_CURRENT_USER\Console","WindowSize","00190050",$true),
+        @("HKEY_CURRENT_USER\Console","QuickEdit","00000000",$true),
+        @("HKEY_CURRENT_USER\Console","ExtendedEditKey","00000000",$true),
+        @("HKEY_CURRENT_USER\Console","ScreenBufferSize","012c0050",$true),
+        @("HKEY_CURRENT_USER\Console","FontWeight","00000190",$true),
+        @("HKEY_CURRENT_USER\Console","FontSize","000e0000",$true),
+        @("HKEY_CURRENT_USER\Console","CurrentPage","00000002",$true),
+        @("HKEY_CURRENT_USER\Console","FaceName","",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_system32_cmd.exe","ScreenBufferSize","0bb8004e",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_system32_cmd.exe","WindowSize","0037004e",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_system32_cmd.exe","FilterOnPaste","00000000",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_system32_cmd.exe","WindowAlpha","000000d9",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_system32_cmd.exe","FaceName","Lucida Console",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_system32_cmd.exe","CursorSize","00000032",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_system32_cmd.exe","FontWeight","000002bc",$true)
+    ),
+    @("Windows PowerShell",$true,
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","ColorTable05","00562401",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","ColorTable06","00f0edee",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","FaceName","Console",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","PopupColors","000000f3",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","ScreenColors","00000056",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","ScreenBufferSize","0bb8004e",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","WindowSize","0037004e",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","FilterOnPaste","00000000",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","WindowAlpha","000000db",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","FontWeight","000002bc",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","CursorSize","00000032",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_SysWOW64_WindowsPowerShell_v1.0_powershell.exe","ColorTable05","00562401",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_SysWOW64_WindowsPowerShell_v1.0_powershell.exe","ColorTable06","00f0edee",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_SysWOW64_WindowsPowerShell_v1.0_powershell.exe","FaceName","Console",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_SysWOW64_WindowsPowerShell_v1.0_powershell.exe","PopupColors","000000f3",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_SysWOW64_WindowsPowerShell_v1.0_powershell.exe","ScreenColors","00000056",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_SysWOW64_WindowsPowerShell_v1.0_powershell.exe","ScreenBufferSize","0bb8004e",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_SysWOW64_WindowsPowerShell_v1.0_powershell.exe","WindowSize","0037004e",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_SysWOW64_WindowsPowerShell_v1.0_powershell.exe","FilterOnPaste","00000000",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_SysWOW64_WindowsPowerShell_v1.0_powershell.exe","WindowAlpha","000000db",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_SysWOW64_WindowsPowerShell_v1.0_powershell.exe","FontWeight","000002bc",$true),
+        @("HKEY_CURRENT_USER\Console\%SystemRoot%_SysWOW64_WindowsPowerShell_v1.0_powershell.exe","CursorSize","00000032",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ScreenColors","00000046",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","PopupColors","000000f3",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ColorTable00","00000000",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ColorTable01","00800000",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ColorTable02","00008000",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ColorTable03","00808000",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ColorTable04","00281980",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ColorTable05","00562401",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ColorTable06","00f0edee",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ColorTable07","00c0c0c0",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ColorTable08","00808080",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ColorTable09","00ff0000",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ColorTable10","0000ff00",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ColorTable11","00ffff00",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ColorTable12","000000ff",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ColorTable13","00ff00ff",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ColorTable14","0000ffff",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ColorTable15","00ffffff",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","InsertMode","00000001",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","QuickEdit","00000001",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","ScreenBufferSize","0bb80078",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","WindowSize","00320078",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","WindowPosition","00000000",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","FontSize","00100000",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","FontFamily","00000036",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","FontWeight","00000190",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","FaceName","Lucida Console",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","CursorSize","00000019",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","HistoryBufferSize","00000032",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","NumberOfHistoryBuffers","00000004",$true),
+        @("HKEY_CURRENT_USER\Console\Windows PowerShell","HistoryNoDup","00000000",$true)
     ),
     @("Contextual Menu - Graphics",$true,
         @("HKEY_CLASSES_ROOT\Directory\Background\shellex\ContextMenuHandlers\ACE",$true),
@@ -174,6 +308,10 @@ $global:RegistryChanges_ListItem=
         @("HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\Current Version\Policies\Explorer",
         "NoChangeStartMenu",1,$true,"RestrictDragandDrop ContextMenu"),
 
+        @("HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Taskband",
+        "Favorites","ff",$true,"Unpin all items from taskbar 1/2"),
+        @("HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Taskband",
+        "FavoritesResolve","-",$true,"Unpin all items from taskbar 2/2"),
         @("HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\Current Version\Policies\Explorer",
         "LockTaskbar",1,$true,"Restrict UnlockTaskBar"),
         @("HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender\UX",
@@ -422,6 +560,15 @@ $global:RegistryChanges_ListItem=
         @("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\  OCOKShared",$true,"OwnCloud"),
         @("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\  OCSync",$true,"OwnCloud"),
         @("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\  OCWarning",$true,"OwnCloud")
+    )
+)
+
+
+$global:module_InstallSoftware=$false
+$global:InstallSoftware_OptionalFeatures=
+@(
+    @("Media Features",$false,
+        @("Windows.cmd",$true)
     )
 )
 

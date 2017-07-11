@@ -132,19 +132,47 @@ function checkInList($item, $list){
     return $ret
 }
 
-function createShortcut($path,$name,$target,$args2){
+function createShortcut($path,$name,$target,$args2,$icon,$hotkey,$description){
     $WScriptShell = New-Object -ComObject WScript.Shell
     $Shortcut = $WScriptShell.CreateShortcut("$($path)\$($name).lnk")
-    $Shortcut.TargetPath="$($target)"
-    if($args2 -ne $null -and $args2 -ne ""){
-        $Shortcut.Arguments="$($args2)"
+    if($target -ne $null -and $target -ne ""){
+        if($target -match 'shell:AppsFolder\\*'){
+            $Shortcut.TargetPath="%windir%\explorer.exe"
+            $metroAppName=$($target -replace "^.*AppsFolder\\","")
+            try{
+                $metroAppID=$(Get-AppXPackage -User $("$global:username") | where-object {$_.Name -match ".*$($metroAppName).*"} | Select-Object -First 1 -ErrorAction Stop).PackageFamilyName
+                if($metroAppID -match '.*microsoft.*'){
+                    $Shortcut.Arguments="shell:AppsFolder\$($metroAppID)!microsoft.$($metroAppName) $($icon)"
+                }else{
+                    $Shortcut.Arguments="shell:AppsFolder\$($metroAppID)!App $($icon)"
+                }
+            }catch{
+                $Shortcut.Arguments="$($args2) $($icon)"
+            }
+        }else{
+            $Shortcut.TargetPath="$($target)"
+            $Shortcut.Arguments="$($args2)"
+        }
+    }
+    $ShortCut.WindowStyle=1
+    if($icon -ne $null -and $icon -ne ""){
+        $ShortCut.IconLocation=$icon
+        #"yourexecutable.exe, 0"
+        if($hotkey -ne $null -and $hotkey -ne ""){
+            $ShortCut.Hotkey=$hotkey
+            if($description -ne $null -and $description -ne ""){
+                $ShortCut.Description=$description
+            }
+        }
     }
     $Shortcut.Save()
 
-    if(Test-Path "$($global:currentLocation)\hashlnk.exe"){
-        &"$($global:currentLocation)\hashlnk.exe" "$($path)\$($name).lnk" | Out-Null
-    }else{
-        display "The hashlnk exectable could not be found in the current folder" "Warning"
+    if($path -match '$($global:UserWinXPath)*'){
+        if(Test-Path "$($global:currentLocation)\hashlnk.exe"){
+            &"$($global:currentLocation)\hashlnk.exe" "$($path)\$($name).lnk" | Out-Null
+        }else{
+            display "The hashlnk exectable could not be found in the current folder" "Warning"
+        }
     }
 }
 
@@ -186,6 +214,374 @@ function iniWinX(){
 function resetWinApps(){
     Get-AppXPackage -User $global:username | Foreach {
         Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"
+    }
+}
+
+function PSProfile(){
+#profilePath is for user
+#$global:profilePathAdmin is for admin
+    display "Profile Admin path is set to '$($global:profilePathAdmin)'" "WARNING"
+    display "Profile user path is set to '$($global:profilePath)'" "WARNING"
+
+    $msg=translate("Authentication Error! Please Change the content of the credentials in '$($global:profilePath)'!")
+    $headerProfilePreContent="
+function sudo {
+    try{
+        `$mycreds=New-Object System.Management.Automation.PSCredential(`$global:CleanStartMenuItem_ProfileAdminUser, `$secpasswd) -ErrorAction Stop
+        `$secpasswd=ConvertTo-SecureString `$global:CleanStartMenuItem_ProfileAdminPassword -AsPlainText -Force -ErrorAction Stop
+        Start-Process powershell -credentials `$mycreds -ErrorAction Stop
+    }catch{
+        write-host $($msg) -ForegroundColor Red
+    }
+}
+"
+    try{
+        #admin
+        "" | Out-File -FilePath $global:profilePathAdmin -ErrorAction Stop
+    }catch{
+        display "Could not write profile headers into '$($global:profilePathAdmin)'" "ERROR"
+    }
+    try{
+        #non admin
+        $headerProfilePreContent | Out-File -FilePath $global:profilePath -ErrorAction Stop
+    }catch{
+        display "Could not write profile headers into '$($global:profilePath)'" "ERROR"
+    }
+    try{
+        for ($i=0; $i -lt $global:Apps_ProfileFooter.length; $i++){
+            Add-Content -Value "$($global:Apps_ProfileFooter[$i][0])" -Path $global:profilePathAdmin -ErrorAction Stop
+            Add-Content -Value "$($global:Apps_ProfileFooter[$i][0])" -Path $global:profilePath -ErrorAction Stop
+        }
+    }catch{
+        display "Could not write profile headers into '$($global:profilePath) / $($global:profilePathAdmin)'" "ERROR"
+    }
+}
+
+function PSProfileItem($alias, $aliasValue){
+#profilePath is for user
+#$global:profilePathAdmin is for admin
+    try{
+        $existingAliasDefinition=(Get-Alias -Name ssh -ErrorAction Stop | Select Definition).definition
+    }catch{
+        $existingAliasDefinition=$null
+    }
+    if($existingAliasDefinition -eq $null -or $existingAliasDefinition -ne $aliasValue){
+        try{
+            Add-Content -Value "Set-Alias -Name $($alias) -Value $(aliasValue)" -Path $global:profilePathAdmin -ErrorAction Stop
+        }catch{
+            display "Could not set alias for application '$($alias)' into file '$($global:profilePathAdmin)'" "ERROR"
+        }
+        try{
+            Add-Content -Value "Set-Alias -Name $($alias) -Value $(aliasValue)" -Path $global:profilePath -ErrorAction Stop
+        }catch{
+            display "Could not set alias for application '$($alias)' into file '$($global:profilePath)'" "ERROR"
+        }
+    }
+}
+
+function winRShortcut(){
+    for ($i=0; $i -lt $global:CleanStartMenuItem_WinRKey.length; $i++){
+        Write-Progress -Id 0 -Activity $(translate "Creating WinR Shortcuts...") `
+        -Status "$([math]::Round(($i/($global:CleanStartMenuItem_WinRKey.length-1)*100),2)) % - $(translate "Working on group") $($global:CleanStartMenuItem_WinRKey[$i][0])" `
+        -PercentComplete $($i/($global:CleanStartMenuItem_WinRKey.length-1)*100)
+
+        if($global:CleanStartMenuItem_WinRKey[$i][1] -eq $true){
+            For($ii=2; $ii -lt $global:CleanStartMenuItem_WinRKey[$i].length; $ii++){
+                if($global:CleanStartMenuItem_WinRKey[$i][$ii][2] -eq $true){
+                    createShortcut "$($env:windir)" "$($global:CleanStartMenuItem_WinRKey[$i][$ii][0])" "$($global:CleanStartMenuItem_WinRKey[$i][$ii][1])"
+                }elseif($global:CleanStartMenuItem_WinRKey[$i][$ii][3] -eq $true){
+                    createShortcut "$($env:windir)" "$($global:CleanStartMenuItem_WinRKey[$i][$ii][0])" "$($global:CleanStartMenuItem_WinRKey[$i][$ii][1])" "$($global:CleanStartMenuItem_WinRKey[$i][$ii][2])"
+                }
+            }
+        }
+    }
+}
+
+function installApps(){
+    $i=0
+    $global:Apps_ListItem | ForEach {
+        Write-Progress -Id 0 -Activity $(translate "Installing/Removing applications") `
+        -Status "$([math]::Round(($global:Apps_ListItem.IndexOf($_)/($global:Apps_ListItem.length-1)*100),2))% - $(translate "Working on group") $($_[0])" `
+        -PercentComplete $($global:Apps_ListItem.IndexOf($_)/($global:Apps_ListItem.length-1)*100)
+        if($_[1] -eq $true){
+            For ($ii=2; $ii -lt $_.length; $ii++) {
+                if($_[$ii][$_[$ii].length-2] -eq $true){
+                    $activity="Installing application"
+                }else{
+                    $activity="Removing application"
+                }
+                if($_[$ii][0] -eq "app"){
+                    $appName=$_[$ii][1]
+                }else{
+                    $appName=$_[$ii][0]
+                }
+                Write-Progress -Id 1 -ParentId 0 -Activity $(translate $activity) `
+                -Status "$([math]::Round((($_.IndexOf($_[$ii])-2)/($_.length-3)*100),2))% - $(translate "Working on") $appName" `
+                -PercentComplete $(($_.IndexOf($_[$ii])-2)/($_.length-3)*100)
+                installApp $_[$ii]
+            }
+        }
+        $i++
+    }
+}
+
+function checkWhenInstalled($path,$reverse){
+    if(($path -eq $true) -or ($path -eq $false)){
+        $reverse=$path
+        $path=$null
+    }
+    if(($path -eq $null) -or ($path -eq "")){
+        return $null
+    }
+    $timeout=1
+    while((((Test-Path -Path $($path)) -and ($reverse -ne $true)) -or ((!(Test-Path -Path $($path))) -and ($reverse -eq $true))) -and ($timeout -lt $global:Apps_MaxTimeOut)){
+        sleep 1
+        $timeout=$timeout+1
+        if($timeout -eq 15){
+            display "The operation takes longer than expected for $($path)... Please Wait" "WARNING"
+        }
+    }
+    if($timeout -ge $global:Apps_MaxTimeOut){
+        return $false
+    }
+    return $true
+}
+
+function getUninstallerString($appName,$regPath){
+    if($regPath -eq $null){
+        $ret=$(getUninstallerString $appName "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\")
+        if(($ret -eq $null) -or ($ret -eq "")){
+            $ret=getUninstallerString $appName "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\"
+        }
+        return $ret
+    }else{
+        try{
+            $uninstallString=$(Get-ItemProperty -Path $(Get-ChildItem -LiteralPath $($regPath) | Select PSPath -ErrorAction Stop).PSPath | Where-Object {$_.DisplayName -match ".*$($appName).*"} | Select UninstallString -ErrorAction Stop).UninstallString
+            return $uninstallString
+        }catch{
+            return $null
+        }
+    }
+}
+
+function installApp($currentApp){
+    if($currentApp[0] -eq "App"){
+        #app
+        $appName=$currentApp[1]
+        Read-Host "$($appName) is not win32"
+        if($currentApp.length -eq 5){
+            $winRShortcut=$currentApp[2]
+        }
+        $install=$currentApp[$currentApp.length-2]
+        $enable=$currentApp[$currentApp.length-1]
+        if($enable -eq $true){
+            if($install -eq $true){
+                #install
+                #missing API... waiting for new stuffs
+                if($winRShortcut -ne $null){
+                    createShortcut "$($env:windir)" "$($winRShortcut)" "%windir%\explorer.exe" "shell:AppsFolder\$($appName)"
+                    display "Creating/Checking winr R shortcut for '$($appName)'..." "WARNING"
+                }
+            }else{
+                #unistall
+                #to finish: setting must not be mandatory the exact application name: get it above!
+                try{
+                    Get-AppxPackage -User $global:username -Name $appName | Remove-AppxPackage -ErrorAction Stop   
+                    display "The Package '$($appName -replace "\."," ")' has been successfully removed (1)!"
+                }catch{
+                    try{
+                        if(Get-AppXProvisionedPackage -Online | Where-Object{$_.DisplayName -match $appName}){
+                            Get-AppXProvisionedPackage -Online | Where-Object{$_.DisplayName -match $appName} | Remove-AppxProvisionedPackage -Online -ErrorAction Stop | Out-Null
+                            display "The Package '$($appName -replace "\."," ")' has been successfully removed (2)!"
+                        }else{
+                            try{
+                                Get-ChildItem -Path "$($env:SystemDrive)\Users\$($global:username)\AppData\Local\Packages" | Where-Object {$_.Name -match $appName} | foreach{
+                                    Remove-Item $_.FullName -Recurse -Force -ErrorAction Stop
+                                    display "The Package '$($appName -replace "\."," ")' has been successfully removed from $($_.FullName) (3)!"
+                                }
+                            }catch{
+                                display "The Package '$($appName -replace "\."," ")' could not be removed!" "ERROR"
+                            }
+                        }
+                    }catch{
+                        try{
+                            Get-ChildItem -Path "$($env:SystemDrive)\Users\$($global:username)\AppData\Local\Packages" | Where-Object {$_.Name -match $appName} | foreach{
+                                Remove-Item $_.FullName -Recurse -Force -ErrorAction Stop
+                                display "The Package '$($appName -replace "\."," ")' has been successfully removed from $($_.FullName) (3)!"
+                            }
+                        }catch{
+                            display "The Package '$($appName -replace "\."," ")' could not be removed!" "ERROR"
+                        }
+                    }
+                }
+            }
+        }
+    }else{
+        #win32
+        $appName=$currentApp[0]
+        $installer=$currentApp[1]
+        if($currentApp.length -eq 6){
+            if( $([regex]".*\\.*").Match($currentApp[2]).Captures[0].value -eq $null ){
+                $installArgs=$currentApp[2]
+            }else{
+                $installPath=$currentApp[2]
+            }
+        }
+        if($currentApp.length -eq 7){
+            $installArgs=$currentApp[2]
+            $installPath=$currentApp[3]
+        }
+        if($currentApp.length -eq 8){
+            $installArgs=$currentApp[2]
+            $installPath=$currentApp[3]
+            $winRShortcut=$currentApp[4]
+            $settingsTargetPath=$currentApp[5]
+        }
+        $installPath=$($installPath -replace "(.*)(\\)$",'$1')
+        if($currentApp.length -ge 5 -and $currentApp.length -le 7){
+            $winRShortcut=$currentApp[$currentApp.length-3]
+        }
+        $install=$currentApp[$currentApp.length-2]
+        $enable=$currentApp[$currentApp.length-1]
+
+        if($enable -eq $true){
+            #enable
+            $uninstallString=$(getUninstallerString $appName)
+            if(($uninstallString -ne $null) -and ($uninstallString -ne "") -and ($uninstallString -notmatch "msiexec")){
+                $installPath=$($uninstallString -replace "(.*)(\\.)(.*)",'$1')
+            }            
+            $flagAlreadyInstalled=$false
+            if(($installPath -ne $null) -and ($installPath -ne "")){
+                if($(Test-Path -Path $installPath -PathType Container)){
+                    if((Get-ChildItem -Path $installPath).length -gt 0){
+                        $flagAlreadyInstalled=$true
+                    }
+                }
+            }
+            if($uninstallString -ne $null){
+                $flagAlreadyInstalled=$true
+            }
+            if($install -eq $true){
+                #install
+                if($flagAlreadyInstalled -eq $false){
+                    #not installed
+                    if($installer -match ".*\.msi"){
+                        #.msi file
+                        Start-Process -FilePath msiexec.exe -ArgumentList "/i $($global:Apps_InstallerDirectory)$($installer) /quiet"
+                    }else{
+                        #.exe file
+                        Start-Process -FilePath "$($global:Apps_InstallerDirectory)$($installer)" -ArgumentList "$($installArgs)"
+                    }
+                    sleep 2
+                    $uninstallString=$(getUninstallerString $appName)
+                    if(($uninstallString -ne $null) -and ($uninstallString -ne "") -and ($uninstallString -notmatch "msiexec")){
+                        $installPath=$($uninstallString -replace "(.*)(\\.)(.*)",'$1')
+                    }
+                    $ret=$(checkWhenInstalled $installPath $true)
+                    if($ret -eq $true){
+                        display "The software '$($appName)' has been successfully installed under '$($installPath)'!" "SUCCESS"
+                    }elseif($ret -eq $false){
+                        display "The software '$($appName)' could not be installed: timeout exceeded!" "ERROR"
+                    }else{
+                        display "The software '$($appName)' may have been installed!" "WARNING"
+                    }
+                    #configurationFiles
+                    try{
+                        $configurationFiles=$(Get-ChildItem -Path $(Get-ChildItem -Path "$($global:Apps_InstallerDirectory)$($installer)" -ErrorAction Stop | select DirectoryName).DirectoryName -ErrorAction Stop | Where-Object {($_.Name -notmatch ".exe") -and ($_.Name -notmatch ".msi") -and ($_.Name -notmatch ".dll")} | select FullName).FullName
+                        if(((($installPath -ne $null) -and ($installPath -ne "")) -or ($settingsTargetPath -ne $null)) -and ($configurationFiles.length -gt 0)){
+                            $flagErr=$false
+                            $configurationFiles | ForEach{
+                                if($settingsTargetPath -eq $null){
+                                    $settingsTargetPath=$installPath
+                                }
+                                try{
+                                    Copy-Item -Path "$($_)" -Destination "$($settingsTargetPath)\" -Force -ErrorAction Stop
+                                }catch {
+                                    display "Configuration files '$($_)' for '$($appName)' could not be copied!" "WARNING"
+                                    $flagErr=$true
+                                }
+                            }
+                            if($flagErr -eq $false){
+                                display "Configuration files for '$($appName)' have been fully installed!" "SUCCESS"
+                            }
+                        }else{
+                            display "Cannot copy configuration files since you didn't precise the installation path!" "ERROR"
+                        }
+                    }catch{
+                        display "Error while listing configuration files!" "WARNING"
+                    }
+                }else{
+                    display "The software '$($appName)' has already been installed!" "WARNING"
+                }
+                if($winRShortcut -ne $null -and $installPath -ne $null){
+                    createShortcut "$($env:windir)" "$($winRShortcut)" "$($installPath)" "$($appName)"
+                    display "Creating/Checking win R shortcut for '$($appName)'..." "WARNING"
+                }
+            }else{
+                #uninstall
+                if($flagAlreadyInstalled -eq $true){
+                    #installed => $installPath and/or $uninstallString exists
+
+                    if(($uninstallString -ne $null) -and ($uuid -match "msiexec")){
+                        $uuid=$($uninstallString -replace "(.*\{)(.*)(\}.*)",'$2')
+                    }
+                    if($uuid -ne $null){
+                        #msi uninstall
+                        Start-Process -FilePath msiexec.exe -ArgumentList "/x{$($uuid)} /quiet"
+                        $ret=$(checkWhenInstalled $uninstallPath)
+                        if($ret -eq $true){
+                            display "The software '$($appName)' has been successfully uninstalled via MSI method!" "SUCCESS"
+                        }elseif($ret -eq $false){
+                            $uuid=$null
+                        }else{
+                            display "The software '$($appName)' may have been uninstalled via MSI method!" "WARNING"
+                        }
+                    }
+                    if($uuid -eq $null){
+                        #exe or direct method
+                        if($installPath -ne $null){
+                            try{
+                                $uninstaller=$(Get-ChildItem -Path "$($installPath)" | Where-Object {$_.Name -match ".*un.*\.exe"} -ErrorAction Stop).FullName
+                            }catch{
+                                $uninstaller=$null
+                            }
+                            if($uninstaller -ne $null){
+                                #exe uninstall
+                                Start-Process -FilePath $($uninstaller) -ArgumentList "$($installArgs)"
+                                $ret=$(checkWhenInstalled $installPath)
+                                if($ret -eq $true){
+                                    display "The software '$($appName)' has been successfully uninstalled from '$($installPath)' via Uninstaller method!" "SUCCESS"
+                                }else{
+                                    $uninstaller=$null
+                                }
+                            }
+                            if($uninstaller -eq $null){
+                                #direct method
+                                try{
+                                    Remove-Item -Path $installPath -Force -Recurse -ErrorAction Stop
+                                    $ret=$(checkWhenInstalled $installPath)
+                                    if($ret -eq $true){
+                                        display "The software '$($appName)' has been successfully uninstalled from '$($installPath)' via direct method!" "SUCCESS"
+                                    }else{
+                                        display "Error while removing the software '$($appName)': timeout exceeded!" "ERROR"
+                                    }
+                                }catch{
+                                    display "Error while removing the software '$($appName)': cannot remove folder!" "ERROR"
+                                }
+                            }
+                        }else{
+                            display "The software '$($appName)' cannot be uninstalled since it was not installed via a msi and you didn't provide any installation path!" "ERROR"
+                        }
+                    }
+                }else{
+                    if($installPath -ne $null){
+                        display "The software '$($appName)' has already been uninstalled!" "WARNING"
+                    }else{
+                        display "The software '$($appName)' cannot be uninstalled since it was not installed via a msi and you didn't provide any installation path!" "ERROR"
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -312,7 +708,7 @@ function removeApps(){
     }
 }
 
-function KeyChanges(){
+function keyChanges(){
 #function that read and call the registry changes with SetRegistryKey($keyPath,$itemAction="DELETE",$value)
     For($i=0; $i -lt $global:RegistryChanges_ListItem.length; $i++){
 
@@ -336,7 +732,7 @@ function KeyChanges(){
     }
 }
 
-function CommandStore(){
+function commandStore(){
 #function that acts on registry settings only related to the explorer commandStore
     $preKey="HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\CommandStore\shell\"
     #do not forget the backslash at the end
@@ -555,7 +951,7 @@ Function SetKey($key,$item,$value){
     }
 }
 
-Function removeKey($key){
+Function RemoveKey($key){
     #remove key
     try{
         Remove-Item -LiteralPath "$($global:prefix)$($key)" -Recurse -ErrorAction Stop | Out-Null
@@ -576,7 +972,7 @@ Function SetRegistryKey($keyPath,$itemAction="DELETE",$value){
                     $flag=$true
                 }
                 try{
-                    removeKey $key.Name -ErrorAction Stop
+                    RemoveKey $key.Name -ErrorAction Stop
                 }catch{
                     if($flag -eq $true){
                         display "Error while changing permissions on '$($key.Name)'" "Warning"
@@ -598,7 +994,7 @@ Function SetRegistryKey($keyPath,$itemAction="DELETE",$value){
     if($itemAction -eq "DELETE"){
         if(Test-Path -LiteralPath "$($global:prefix)$($keyPath)"){
             try{
-                removeKey $keyPath -ErrorAction Stop
+                RemoveKey $keyPath -ErrorAction Stop
                 display "The registry key '$($keyPath)' and its subkeys have been successfully removed!"
             }catch{
                 if($flag -eq $true){
@@ -639,8 +1035,9 @@ Function SetRegistryKey($keyPath,$itemAction="DELETE",$value){
             }
         }
     }
-}
+}#>
 
 ########### end registry functions
 
-Export-ModuleMember -Function "*"
+#Export-ModuleMember -Function "*"
+

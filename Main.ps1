@@ -6,11 +6,17 @@ Third Dependency: hashlnk.exe software
 
 License: the script (wihout its tird dependency) is under GNU GPL v3.0 license and can be edited, distributed for commercial/private use.
 For the hashlnk.exe utility license, see https://github.com/riverar/hashlnk/blob/master/LICENSE (opensource).
+
+# todo:
+- install should find automatically path after install : ok but to exe not to folder!
+- strange thing: installing software: get the uninstaller jusst after installing?? wtf?
 #>
 
 param (
-   [string]$user
+   [string]$user,
+   [string]$userProfile
 )
+$user="Jean-Baptiste Delon"
 $global:currentScript=$MyInvocation.MyCommand.Name
 $global:currentLocation=Split-Path -Path $MyInvocation.MyCommand.Path
 
@@ -27,7 +33,7 @@ If (!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]
     }
     if($Answ -eq "Y"){
         try{
-            start-process powershell -ArgumentList "-noexit","&'$($global:currentLocation)\$($global:currentScript)' -user '$($user)'" -Verb RunAs -ErrorAction Stop 
+            start-process powershell -ArgumentList "-noexit","&'$($global:currentLocation)\$($global:currentScript)' -user '$($user)' -userProfile '$($profile)'" -Verb RunAs -ErrorAction Stop 
         }catch{
             Write-Host "You don't have the permissions, or the credentials you have given are wrong!" -ForegroundColor red
         }
@@ -52,12 +58,14 @@ If (!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]
     }
     $global:username=$user
     $global:userPath="$($env:SystemDrive)\Users\$($global:username)"
+    $global:profilePath=$userProfile
+    $global:profilePathAdmin=$profile
 }
 
 try{
     Import-Module "$($global:currentLocation)\Core.psm1" -Force -ErrorAction Stop -Scope Local
 }catch{
-    write-host "An error has occured while loading the function core module" -ForegroundColor Red
+    write-host "An error has occured while loading the function core module $($global:currentLocation)\Core.psm1" -ForegroundColor Red
     Exit   
 }
 try{
@@ -73,6 +81,8 @@ try{
     $global:systemLanguage="en"
     write-host "Unable to detect system language - The script has been set to the default system language - English!" -ForegroundColor Yellow
 }
+$global:systemLanguage="en"
+#force to English
 
 cd /
 cls
@@ -81,27 +91,33 @@ display "The script is begining!"
 if($global:module_CleanStartMenuItem){
     transfer $global:AllUserPath $global:UserStartMenuPath
     sortItem $global:UserStartMenuPath
-    #iniWinX
+    iniWinX
 }
 $global:StateError=$global:StateError+1000
 
-if($global:module_CleanApps){
-    if($global:CleanApps_ResetApps){
+if($global:module_Apps){
+    <#f($global:Apps_ResetApps){
         resetWinApps
     }
-    removeApps
+    #removeApps
+    installApps
+    winRShortcut
+    PSProfile $profile $true
+    PSProfile $userProfile $false#>
+    installApps
+    #PSProfile
 }
 $global:StateError=$global:StateError+1000
 
 if($global:module_RegistryChanges){
-    KeyChanges
+    keyChanges
 }
 
 if($global:module_RegistryCommandStore){
     display "Using this command can break some commands in you explorer. Are you really sure you want to change the Command store [y/N]" "Warning" $true
     $answ=Read-Host " "
     if ($answ -ieq "Y") {
-        CommandStore
+         commandStore
     }else{
         display "The action has been cancelled by the user!"
     }
