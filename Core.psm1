@@ -16,7 +16,9 @@ function display($msg, $type = "Information", $disableLog = $false){
             write-host "[FATAL ERROR] The Log file $($env:windir)\System32\winevt\Logs\$($global:logName).evtx doesn't exist" -ForegroundColor Red
             write-host "Please provide a correct value to the global variable $global:logName. Ths script will not start untill this problem is not solved!" -ForegroundColor Red -BackgroundColor Yellow
             cd $global:currentLocation
-            exit
+            if($global:debug -eq $false){
+                exit
+            }
         }else{
             try{
                 New-Eventlog -LogName $global:logName -Source $global:logSource -ErrorAction Stop
@@ -31,7 +33,9 @@ function display($msg, $type = "Information", $disableLog = $false){
 
     if($type -eq "Error"){
         cd $global:currentLocation
-        exit
+        if($global:debug -eq $false){
+            exit
+        }
     }
 }
 
@@ -132,24 +136,64 @@ function checkInList($item, $list){
     return $ret
 }
 
+function resolveMetroApp($appName){
+    $metroAppName=$($target -replace "^.*AppsFolder\\","")
+    try{
+        $metroAppID=$(Get-AppXPackage -User $("$global:userName") | where-object {$_.Name -match ".*$($metroAppName).*"} | Select-Object -First 1 -ErrorAction Stop).PackageFamilyName
+        if($metroAppID -match '.*microsoft.*'){
+            $Shortcut.Arguments="shell:AppsFolder\$($metroAppID)!microsoft.$($metroAppName) $($icon)"
+        }else{
+            $Shortcut.Arguments="shell:AppsFolder\$($metroAppID)!App $($icon)"
+        }
+    }catch{
+        $Shortcut.Arguments="$($args2) $($icon)"
+    }
+}
+
 function createShortcut($path,$name,$target,$args2,$icon,$hotkey,$description){
+    #createShortcut "$($env:windir)" "$($winRShortcut)" "%windir%\explorer.exe" "shell:AppsFolder\$($appName)"
     $WScriptShell = New-Object -ComObject WScript.Shell
     $Shortcut = $WScriptShell.CreateShortcut("$($path)\$($name).lnk")
     if($target -ne $null -and $target -ne ""){
-        if($target -match 'shell:AppsFolder\\*'){
+        if($args2 -match 'shell:AppsFolder\\*'){
             $Shortcut.TargetPath="%windir%\explorer.exe"
-            $metroAppName=$($target -replace "^.*AppsFolder\\","")
+            echo "is an app"
+            $metroAppName=$($args2 -replace "^.*AppsFolder\\","")
+            $job=Start-Job -scriptblock {
+                param ($username)
+                Get-AppXPackage
+            } -Args $global:userName -credential $global:userCreds
+            $installedapps=$job | Receive-Job
+            #$installedapps = Get-AppXPackage -User $("$global:userName")
+            echo $installedapps
+            $aumidList = @()
+            foreach ($app in $installedapps){
+                foreach ($id in (Get-AppxPackageManifest $app).package.applications.application.id){
+                    if($app.packagefamilyname -match ".*$($metroAppName).*"){
+                        $metroAppID="shell:AppsFolder\$($app.packagefamilyname)!$($id)"
+                        echo "metroAppID is $($metroAppID)"
+                        $Shortcut.Arguments=$metroAppID
+                        break
+                    }
+                }
+            }
+            <#display "metro app name is $($metroAppName)"
             try{
-                $metroAppID=$(Get-AppXPackage -User $("$global:username") | where-object {$_.Name -match ".*$($metroAppName).*"} | Select-Object -First 1 -ErrorAction Stop).PackageFamilyName
+                $metroAppID=$(Get-AppXPackage -User $("$global:userName") | where-object {$_.Name -match ".*$($metroAppName).*"} | Select-Object -First 1 -ErrorAction Stop).PackageFamilyName
+                display "metroAppID is $($metroAppID)"
                 if($metroAppID -match '.*microsoft.*'){
                     $Shortcut.Arguments="shell:AppsFolder\$($metroAppID)!microsoft.$($metroAppName) $($icon)"
+                    display "shell:AppsFolder\$($metroAppID)!microsoft.$($metroAppName) $($icon)"
                 }else{
                     $Shortcut.Arguments="shell:AppsFolder\$($metroAppID)!App $($icon)"
+                    display "shell:AppsFolder\$($metroAppID)!App $($icon)"
                 }
             }catch{
+                display "error"
                 $Shortcut.Arguments="$($args2) $($icon)"
-            }
+            }#>
         }else{
+            display "is NOT an app"
             $Shortcut.TargetPath="$($target)"
             $Shortcut.Arguments="$($args2)"
         }
@@ -212,54 +256,74 @@ function iniWinX(){
 }
 
 function resetWinApps(){
-    Get-AppXPackage -User $global:username | Foreach {
+    Get-AppXPackage -User $global:userName | Foreach {
         Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"
     }
 }
 
 function PSProfile(){
-#profilePath is for user
-#$global:profilePathAdmin is for admin
-    display "Profile Admin path is set to '$($global:profilePathAdmin)'" "WARNING"
-    display "Profile user path is set to '$($global:profilePath)'" "WARNING"
+#$global:userProfile is for user
+#$global:userProfileAdmin is for admin
+    display "Profile Admin path is set to '$($global:userProfileAdmin)'" "WARNING"
+    display "Profile user path is set to '$($global:userProfile)'" "WARNING"
 
-    $msg=translate("Authentication Error! Please Change the content of the credentials in '$($global:profilePath)'!")
+    Get-ChildItem -path "$($global:currentLocation)\PSModules\" | Foreach{
+        $snapFile=$_.Name
+        $snapName=$($_.Name -replace "(.*)(\..*)$",'$1')
+        if($(Get-PSSnapin -registered | Where-Object {$_.Name -eq $snapName} | select *) -eq $null){
+            &(resolve-path (join-path $([System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory()) installutil.exe)).Path "$($global:currentLocation)\PSModules\$($snapFile)"
+        }
+    }
+
+    $msg=translate("Authentication Error! Please Change the content of the credentials in '$($global:userProfile)'!")
+    if($global:userPasswordAdmin -eq $null -or $global:userPasswordAdmin -eq ""){
+        $global:userPasswordAdmin="empty"
+    }
+    $hashed=$($global:userPasswordAdmin | ConvertFrom-SecureString)
     $headerProfilePreContent="
 function sudo {
     try{
-        `$mycreds=New-Object System.Management.Automation.PSCredential(`$global:CleanStartMenuItem_ProfileAdminUser, `$secpasswd) -ErrorAction Stop
-        `$secpasswd=ConvertTo-SecureString `$global:CleanStartMenuItem_ProfileAdminPassword -AsPlainText -Force -ErrorAction Stop
-        Start-Process powershell -credentials `$mycreds -ErrorAction Stop
+        `$secpasswd=`$(`"$hashed`" | ConvertTo-SecureString)
+        `$mycreds=New-Object System.Management.Automation.PSCredential(`"$global:userNameAdmin`", `$secpasswd) -ErrorAction Stop
+        Start-Process powershell -credential `$mycreds -ErrorAction Stop
+        Stop-process -Id `$PID -ErrorAction Stop
     }catch{
-        write-host $($msg) -ForegroundColor Red
+        try{
+            Start-Process powershell.exe -Verb Runas -ErrorAction Stop
+            Stop-process -Id `$PID -ErrorAction Stop
+        }catch{
+            write-host $($msg) -ForegroundColor Red
+        }
     }
 }
 "
     try{
         #admin
-        "" | Out-File -FilePath $global:profilePathAdmin -ErrorAction Stop
+        "" | Out-File -FilePath $global:userProfileAdmin -ErrorAction Stop
+        echo $global:userProfileAdmin
     }catch{
-        display "Could not write profile headers into '$($global:profilePathAdmin)'" "ERROR"
+        display "Could not write profile headers into '$($global:userProfileAdmin)'" "ERROR"
     }
     try{
         #non admin
-        $headerProfilePreContent | Out-File -FilePath $global:profilePath -ErrorAction Stop
+        $headerProfilePreContent | Out-File -FilePath $global:userProfile -ErrorAction Stop
+        echo $global:userProfile
     }catch{
-        display "Could not write profile headers into '$($global:profilePath)'" "ERROR"
+        display "Could not write profile headers into '$($global:userProfile)'" "ERROR"
     }
     try{
         for ($i=0; $i -lt $global:Apps_ProfileFooter.length; $i++){
-            Add-Content -Value "$($global:Apps_ProfileFooter[$i][0])" -Path $global:profilePathAdmin -ErrorAction Stop
-            Add-Content -Value "$($global:Apps_ProfileFooter[$i][0])" -Path $global:profilePath -ErrorAction Stop
+            Add-Content -Value "$($global:Apps_ProfileFooter[$i][0])" -Path $global:userProfileAdmin -ErrorAction Stop
+            Add-Content -Value "$($global:Apps_ProfileFooter[$i][0])" -Path $global:userProfile -ErrorAction Stop
         }
     }catch{
-        display "Could not write profile headers into '$($global:profilePath) / $($global:profilePathAdmin)'" "ERROR"
+        display "Could not write profile headers into '$($global:userProfile) / $($global:userProfileAdmin)'" "ERROR"
     }
 }
 
 function PSProfileItem($alias, $aliasValue){
-#profilePath is for user
-#$global:profilePathAdmin is for admin
+#$global:userProfile is for user
+#$global:userProfileAdmin is for admin
     try{
         $existingAliasDefinition=(Get-Alias -Name ssh -ErrorAction Stop | Select Definition).definition
     }catch{
@@ -267,32 +331,14 @@ function PSProfileItem($alias, $aliasValue){
     }
     if($existingAliasDefinition -eq $null -or $existingAliasDefinition -ne $aliasValue){
         try{
-            Add-Content -Value "Set-Alias -Name $($alias) -Value $(aliasValue)" -Path $global:profilePathAdmin -ErrorAction Stop
+            Add-Content -Value "Set-Alias -Name $($alias) -Value `"$($aliasValue)`"" -Path $global:userProfileAdmin -ErrorAction Stop
         }catch{
-            display "Could not set alias for application '$($alias)' into file '$($global:profilePathAdmin)'" "ERROR"
+            display "Could not set alias for application '$($alias)' into file '$($global:userProfileAdmin)'" "ERROR"
         }
         try{
-            Add-Content -Value "Set-Alias -Name $($alias) -Value $(aliasValue)" -Path $global:profilePath -ErrorAction Stop
+            Add-Content -Value "Set-Alias -Name $($alias) -Value `"$($aliasValue)`"" -Path $global:userProfile -ErrorAction Stop
         }catch{
-            display "Could not set alias for application '$($alias)' into file '$($global:profilePath)'" "ERROR"
-        }
-    }
-}
-
-function winRShortcut(){
-    for ($i=0; $i -lt $global:CleanStartMenuItem_WinRKey.length; $i++){
-        Write-Progress -Id 0 -Activity $(translate "Creating WinR Shortcuts...") `
-        -Status "$([math]::Round(($i/($global:CleanStartMenuItem_WinRKey.length-1)*100),2)) % - $(translate "Working on group") $($global:CleanStartMenuItem_WinRKey[$i][0])" `
-        -PercentComplete $($i/($global:CleanStartMenuItem_WinRKey.length-1)*100)
-
-        if($global:CleanStartMenuItem_WinRKey[$i][1] -eq $true){
-            For($ii=2; $ii -lt $global:CleanStartMenuItem_WinRKey[$i].length; $ii++){
-                if($global:CleanStartMenuItem_WinRKey[$i][$ii][2] -eq $true){
-                    createShortcut "$($env:windir)" "$($global:CleanStartMenuItem_WinRKey[$i][$ii][0])" "$($global:CleanStartMenuItem_WinRKey[$i][$ii][1])"
-                }elseif($global:CleanStartMenuItem_WinRKey[$i][$ii][3] -eq $true){
-                    createShortcut "$($env:windir)" "$($global:CleanStartMenuItem_WinRKey[$i][$ii][0])" "$($global:CleanStartMenuItem_WinRKey[$i][$ii][1])" "$($global:CleanStartMenuItem_WinRKey[$i][$ii][2])"
-                }
-            }
+            display "Could not set alias for application '$($alias)' into file '$($global:userProfile)'" "ERROR"
         }
     }
 }
@@ -364,11 +410,26 @@ function getUninstallerString($appName,$regPath){
     }
 }
 
+function getExePath($appName,$installPath){
+    $exePath=$(Get-ItemProperty -Path $(Get-ChildItem -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\" | Select PSPath -ErrorAction Stop).PSPath | Where-Object {$_.DisplayName -match ".*$($appName).*"} | Select DisplayIcon -ErrorAction Stop).DisplayIcon
+    if(($exePath -eq $null) -or ($exePath -eq "")){
+        $exePath=$(Get-ItemProperty -Path $(Get-ChildItem -LiteralPath "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\" | Select PSPath -ErrorAction Stop).PSPath | Where-Object {$_.DisplayName -match ".*$($appName).*"} | Select DisplayIcon -ErrorAction Stop).DisplayIcon
+        if(($exePath -eq $null) -or ($exePath -eq "")){
+            if(!Test-Path -Path "$($installPath)\$($appName)"){
+                return $null
+            }else{
+                $exePath="$($installPath)\$($appName)"
+            }
+        }
+    }
+    return $exePath
+}
+
 function installApp($currentApp){
     if($currentApp[0] -eq "App"){
         #app
         $appName=$currentApp[1]
-        Read-Host "$($appName) is not win32"
+        write-Host "$($appName) is not win32"
         if($currentApp.length -eq 5){
             $winRShortcut=$currentApp[2]
         }
@@ -380,13 +441,15 @@ function installApp($currentApp){
                 #missing API... waiting for new stuffs
                 if($winRShortcut -ne $null){
                     createShortcut "$($env:windir)" "$($winRShortcut)" "%windir%\explorer.exe" "shell:AppsFolder\$($appName)"
-                    display "Creating/Checking winr R shortcut for '$($appName)'..." "WARNING"
+                    display "Creating/Checking winR shortcut for '$($appName)'..." "WARNING"
+                    #PSProfileItem "$($winRShortcut)" "$($exePath)"
+                    #display "Adding PS Profile Alias for '$($appName)'..." "WARNING"
                 }
             }else{
                 #unistall
                 #to finish: setting must not be mandatory the exact application name: get it above!
                 try{
-                    Get-AppxPackage -User $global:username -Name $appName | Remove-AppxPackage -ErrorAction Stop   
+                    Get-AppxPackage -User $global:userName -Name $appName | Remove-AppxPackage -ErrorAction Stop   
                     display "The Package '$($appName -replace "\."," ")' has been successfully removed (1)!"
                 }catch{
                     try{
@@ -395,7 +458,7 @@ function installApp($currentApp){
                             display "The Package '$($appName -replace "\."," ")' has been successfully removed (2)!"
                         }else{
                             try{
-                                Get-ChildItem -Path "$($env:SystemDrive)\Users\$($global:username)\AppData\Local\Packages" | Where-Object {$_.Name -match $appName} | foreach{
+                                Get-ChildItem -Path "$($env:SystemDrive)\Users\$($global:userName)\AppData\Local\Packages" | Where-Object {$_.Name -match $appName} | foreach{
                                     Remove-Item $_.FullName -Recurse -Force -ErrorAction Stop
                                     display "The Package '$($appName -replace "\."," ")' has been successfully removed from $($_.FullName) (3)!"
                                 }
@@ -405,7 +468,7 @@ function installApp($currentApp){
                         }
                     }catch{
                         try{
-                            Get-ChildItem -Path "$($env:SystemDrive)\Users\$($global:username)\AppData\Local\Packages" | Where-Object {$_.Name -match $appName} | foreach{
+                            Get-ChildItem -Path "$($env:SystemDrive)\Users\$($global:userName)\AppData\Local\Packages" | Where-Object {$_.Name -match $appName} | foreach{
                                 Remove-Item $_.FullName -Recurse -Force -ErrorAction Stop
                                 display "The Package '$($appName -replace "\."," ")' has been successfully removed from $($_.FullName) (3)!"
                             }
@@ -513,9 +576,12 @@ function installApp($currentApp){
                 }else{
                     display "The software '$($appName)' has already been installed!" "WARNING"
                 }
-                if($winRShortcut -ne $null -and $installPath -ne $null){
-                    createShortcut "$($env:windir)" "$($winRShortcut)" "$($installPath)" "$($appName)"
-                    display "Creating/Checking win R shortcut for '$($appName)'..." "WARNING"
+                $exePath=$(getExePath $appName $installPath)
+                if(($exePath -ne $null) -and ($winRShortcut -ne $null)){
+                    createShortcut "$($env:windir)" "$($winRShortcut)" "$($exePath)"
+                    display "Creating/Checking winR shortcut for '$($appName)'..." "WARNING"
+                    PSProfileItem "$($winRShortcut)" "$($exePath)"
+                    display "Adding PS Profile Alias for '$($appName)'..." "WARNING"
                 }
             }else{
                 #uninstall
@@ -584,9 +650,9 @@ function installApp($currentApp){
         }
     }
 }
-
+<#
 function removeApps(){
-    <#Microsoft.BioEnrollment
+    Microsoft.BioEnrollment
     Windows.ContactSupport
     Microsoft.WindowsFeedbackHub
     WildTangentGames.-GamesApp-
@@ -602,7 +668,7 @@ function removeApps(){
     AccuWeather.AccuWeatherforWindows8
     4AE8B7C2.Booking.comPartnerEdition
     Microsoft.OfficeOnline
-    7digitalLtd.7digitalMusicStore#>
+    7digitalLtd.7digitalMusicStore
 
     #Seem not working : Microsoft.WindowsFeedback Windows.ContactSupport Microsoft.BioEnrollment Microsoft.XboxGameCallableUI Microsoft.WindowsReadingList
     
@@ -623,7 +689,7 @@ function removeApps(){
                         Remove-Variable h -ErrorAction Stop
                     }catch{}
 	                #$h.fullname=(Get-AppXProvisionedPackage -online | where-object {$_.DisplayName -ieq "$($h.name)"}).PackageName
-                    $h=Get-AppXPackage -User $global:username | where-object {$_.Name -match ".*$($global:CleanApps_ListItem[$i][$ii][0]).*"}
+                    $h=Get-AppXPackage -User $global:userName | where-object {$_.Name -match ".*$($global:CleanApps_ListItem[$i][$ii][0]).*"}
 	                if ($h.PackageFullName -and $h.name) {
 		                $Found+=$a.length
 	                } else {
@@ -672,7 +738,7 @@ function removeApps(){
 		    for ($i=0; $i -lt $Found.length; $i++) {
                 Write-Progress -Id 0 -Activity $(translate "Removing $($a[$Found[$i]].name)..") -PercentComplete $($i/($Found.length)*100)
                 try{
-                    Get-AppxPackage -User $global:username -Name $a[$Found[$i]].Name | Remove-AppxPackage -ErrorAction Stop
+                    Get-AppxPackage -User $global:userName -Name $a[$Found[$i]].Name | Remove-AppxPackage -ErrorAction Stop
                     
 	                display "The Package '$($a[$Found[$i]].Name -replace "\."," ")' has been successfully removed (1)!"
                 }catch{
@@ -682,7 +748,7 @@ function removeApps(){
                             display "The Package '$($a[$Found[$i]].Name -replace "\."," ")' has been successfully removed (2)!"
                         }else{
                             try{
-                                Get-ChildItem -Path "$($env:SystemDrive)\Users\$($global:username)\AppData\Local\Packages" | Where-Object {$_.Name -match $a[$Found[$i]].Name} | foreach{
+                                Get-ChildItem -Path "$($env:SystemDrive)\Users\$($global:userName)\AppData\Local\Packages" | Where-Object {$_.Name -match $a[$Found[$i]].Name} | foreach{
                                     Remove-Item $_.FullName -Recurse -Force -ErrorAction Stop
                                     display "The Package '$($a[$Found[$i]].Name -replace "\."," ")' has been successfully removed from $($_.FullName) (3)!"
                                 }
@@ -692,7 +758,7 @@ function removeApps(){
                         }
                     }catch{
                         try{
-                            Get-ChildItem -Path "$($env:SystemDrive)\Users\$($global:username)\AppData\Local\Packages" | Where-Object {$_.Name -match $a[$Found[$i]].Name} | foreach{
+                            Get-ChildItem -Path "$($env:SystemDrive)\Users\$($global:userName)\AppData\Local\Packages" | Where-Object {$_.Name -match $a[$Found[$i]].Name} | foreach{
                                 Remove-Item $_.FullName -Recurse -Force -ErrorAction Stop
                                 display "The Package '$($a[$Found[$i]].Name -replace "\."," ")' has been successfully removed from $($_.FullName) (3)!"
                             }
@@ -706,10 +772,11 @@ function removeApps(){
     }else{
         display "No apps have been found ! " "Warning"
     }
-}
+}#>
 
 function keyChanges(){
 #function that read and call the registry changes with SetRegistryKey($keyPath,$itemAction="DELETE",$value)
+
     For($i=0; $i -lt $global:RegistryChanges_ListItem.length; $i++){
 
         Write-Progress -Id 0 -Activity $(translate "Changing and Removing Keys...") `
@@ -720,11 +787,21 @@ function keyChanges(){
             For($ii=2; $ii -lt $global:RegistryChanges_ListItem[$i].length; $ii++){
                 if($global:RegistryChanges_ListItem[$i][$ii].length -eq 2 -Or $global:RegistryChanges_ListItem[$i][$ii].length -eq 3){
                     if($global:RegistryChanges_ListItem[$i][$ii][1] -eq $true){
-                       SetRegistryKey $global:RegistryChanges_ListItem[$i][$ii][0]
+                        if($global:RegistryChanges_ListItem[$i][$ii][0] -match "^HKEY_CURRENT_USER.*"){
+                            SetRegistryKey $($global:RegistryChanges_ListItem[$i][$ii][0] -replace "^HKEY_CURRENT_USER","HKEY_USERS\$($global:userSIDAdmin)")
+                            SetRegistryKey $($global:RegistryChanges_ListItem[$i][$ii][0] -replace "^HKEY_CURRENT_USER","HKEY_USERS\$($global:userSID)")
+                        }else{
+                            SetRegistryKey $global:RegistryChanges_ListItem[$i][$ii][0]
+                        }
                     }
                 }elseif($global:RegistryChanges_ListItem[$i][$ii].length -eq 4 -Or $global:RegistryChanges_ListItem[$i][$ii].length -eq 5){
                     if($global:RegistryChanges_ListItem[$i][$ii][3] -eq $true){
-                       SetRegistryKey $global:RegistryChanges_ListItem[$i][$ii][0] $global:RegistryChanges_ListItem[$i][$ii][1] $global:RegistryChanges_ListItem[$i][$ii][2]
+                        if($global:RegistryChanges_ListItem[$i][$ii][0] -match "^HKEY_CURRENT_USER.*"){
+                            SetRegistryKey $($global:RegistryChanges_ListItem[$i][$ii][0] -replace "^HKEY_CURRENT_USER","HKEY_USERS\$($global:userSIDAdmin)") $global:RegistryChanges_ListItem[$i][$ii][1] $global:RegistryChanges_ListItem[$i][$ii][2]
+                            SetRegistryKey $($global:RegistryChanges_ListItem[$i][$ii][0] -replace "^HKEY_CURRENT_USER","HKEY_USERS\$($global:userSID)") $global:RegistryChanges_ListItem[$i][$ii][1] $global:RegistryChanges_ListItem[$i][$ii][2]
+                        }else{
+                            SetRegistryKey $global:RegistryChanges_ListItem[$i][$ii][0] $global:RegistryChanges_ListItem[$i][$ii][1] $global:RegistryChanges_ListItem[$i][$ii][2]
+                        }
                     }
                 }
             } 
@@ -791,7 +868,7 @@ $global:prefix="Registry::"
 Function Enable-Privilege{
     param($Privilege)
   
-    #this hack is working and called from the function TakeOwnership-Object
+    #this hack is working and called from the function Set-OwnershipObject
   
     $definition = @'
 using System;
@@ -840,7 +917,7 @@ public class AdjPriv {
     }
 }
 
-Function TakeOwnership-Object($keyPath,$owner){
+Function Set-OwnershipObject($keyPath,$owner){
 
     #This function is working and take the ownership
 
@@ -896,7 +973,7 @@ Function Add-RuleItem($keyPath,$user,$rights,$propagationFlag,$inheritanceFlag,$
     }
 }
 
-Function ChangeInheritance-Object($keyPath,$disableInheritance,$preserverInheritanceIfDisabled){
+Function Set-InheritanceObject($keyPath,$disableInheritance,$preserverInheritanceIfDisabled){
     #This function changes inheritance settings --- can bug --- Fixed with Literal Path instad of Path?
     try{
         $keyPath = $global:prefix+$keyPath
@@ -925,9 +1002,9 @@ Function SetPermissions($key){
         $key=$keyArr[0..($keyArr.Length-2)] -join "\"
     }
     try{
-        TakeOwnership-Object $key $global:adminGroup -ErrorAction Stop
+        Set-OwnershipObject $key $global:adminGroup -ErrorAction Stop
         Add-RuleItem $key $global:adminGroup $global:rights $global:propagationFlag $global:inheritanceFlag $global:rule -ErrorAction Stop
-        ChangeInheritance-Object $key $global:disableInheritance $global:preserverInheritanceIfDisabled -ErrorAction Stop
+        Set-InheritanceObject $key $global:disableInheritance $global:preserverInheritanceIfDisabled -ErrorAction Stop
     }catch{
         throw $_
     }

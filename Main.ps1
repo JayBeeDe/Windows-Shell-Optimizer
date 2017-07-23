@@ -8,23 +8,28 @@ License: the script (wihout its tird dependency) is under GNU GPL v3.0 license a
 For the hashlnk.exe utility license, see https://github.com/riverar/hashlnk/blob/master/LICENSE (opensource).
 
 # todo:
+
+-> fix issue with !App sufix
+-> add admin support for transfer, sortItem, iniWinX
+- add feature optional features
+- add featue install normal app (from appx package...)
 - install should find automatically path after install : ok but to exe not to folder!
-- strange thing: installing software: get the uninstaller jusst after installing?? wtf?
+- strange thing: installing software: get the uninstaller just after installing?? wtf?
+- when installing software that MAY HAVE BEEN installed: do not exit the program. There are other softwares to install after!
 #>
 
 param (
-   [string]$user,
-   [string]$userProfile
+   [string]$userName,
+   [string]$userProfile,
+   [string]$userPath,
+   [string]$userSID
 )
-$user="Jean-Baptiste Delon"
 $global:currentScript=$MyInvocation.MyCommand.Name
 $global:currentLocation=Split-Path -Path $MyInvocation.MyCommand.Path
+$global:debug=$true
 
 If (!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
     [Security.Principal.WindowsBuiltInRole] "Administrator")){
-    if($user -eq $null -Or $user -eq ""){
-        $user=$env:USERNAME
-    }
     $Answ=$null
     While ($Answ -ne "Y" -and $Answ -ne "N"){
         cls
@@ -33,33 +38,28 @@ If (!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]
     }
     if($Answ -eq "Y"){
         try{
-            start-process powershell -ArgumentList "-noexit","&'$($global:currentLocation)\$($global:currentScript)' -user '$($user)' -userProfile '$($profile)'" -Verb RunAs -ErrorAction Stop 
+            $userSID=(New-Object System.Security.Principal.NTAccount($env:USERNAME) -ErrorAction Stop).Translate([System.Security.Principal.SecurityIdentifier]).value
+        }catch{
+            write-host "Could not find a user SID for user $($env:USERNAME)" -ForegroundColor Red
+            Exit
+        }
+        try{
+            start-process powershell -ArgumentList "-noexit","&'$($global:currentLocation)\$($global:currentScript)' -userName '$($env:USERNAME)' -userPath '$($env:userprofile)' -userProfile '$($profile)' -usersid '$($userSID)'" -Verb RunAs -ErrorAction Stop
         }catch{
             Write-Host "You don't have the permissions, or the credentials you have given are wrong!" -ForegroundColor red
         }
-        try{
-            stop-process -Id $PID -ErrorAction Stop
-        }catch{
-            Write-Host "This Window could not be closed" -ForegroundColor Red
-            Exit
+        if($global:debug -eq $false){
+            try{
+                stop-process -Id $PID -ErrorAction Stop
+            }catch{
+                Write-Host "This Window could not be closed" -ForegroundColor Red
+            }
         }
+        Exit
     }else{
         Write-Host "This script need administrator permission to run!" -ForegroundColor Red
         Exit
     }
-}else{
-    if($user -eq $null -Or $user -eq ""){
-        Write-Host "This user must be specified by the arg -user <username>!" -ForegroundColor Red
-        Exit
-    }
-    if(!(Test-Path -Path "$($env:SystemDrive)\Users\$($user)" -PathType Container)){
-        Write-Host "This specified user has no path in $($env:SystemDrive)\Users\$($user)" -ForegroundColor Red
-        Exit        
-    }
-    $global:username=$user
-    $global:userPath="$($env:SystemDrive)\Users\$($global:username)"
-    $global:profilePath=$userProfile
-    $global:profilePathAdmin=$profile
 }
 
 try{
@@ -84,28 +84,72 @@ try{
 $global:systemLanguage="en"
 #force to English
 
+$global:userNameAdmin=$env:USERNAME
+if($userName -eq $null -Or $userName -eq ""){
+    display "This user must be specified by the arg -user <username>!" "ERROR"
+}else{
+    $global:userName=$userName
+}
+try{
+    $global:userSIDAdmin=(New-Object System.Security.Principal.NTAccount($global:userNameAdmin) -ErrorAction Stop).Translate([System.Security.Principal.SecurityIdentifier]).value
+}catch{
+    display "Could not find a user SID for user $($global:userNameAdmin)" "ERROR"
+}
+if($userSID -eq $null -Or $userSID -eq ""){
+    display "This user SID must be specified by the arg -userSID <userSID>!" "ERROR"
+}else{
+    $global:userSID=$userSID
+}
+if(!(Test-Path -Path $env:userprofile -PathType Container)){
+    display "This admin user has no path in $($env:userprofile)" "ERROR"
+}else{
+    $global:userPathAdmin=$env:userprofile
+}
+if(!(Test-Path -Path $userPath -PathType Container)){
+    display "This specified user has no path in $($userPath)" "ERROR"
+}else{
+    $global:userPath=$userPath
+}
+if(!(Test-Path -Path $profile -PathType Leaf)){
+    display "This admin user has no profile in $($profile)" "ERROR"
+}else{
+    $global:userProfileAdmin=$profile
+}
+if(!(Test-Path -Path $userProfile -PathType Leaf)){
+    display "This specified user has no profile in $($userProfile)" "ERROR"
+}else{
+    $global:userProfile=$userProfile
+}
+if(!(Test-Path -Path "$($global:currentLocation)\admin.pwd" -PathType Leaf)){
+    $global:userPasswordAdmin=$(Read-Host $(translate "Please enter the password for account $($global:userNameAdmin)") -AsSecureString)
+    $global:userPasswordAdmin | ConvertFrom-SecureString | Out-File "$($global:currentLocation)\admin.pwd"
+}else{
+    $global:userPasswordAdmin=$(cat "$($global:currentLocation)\admin.pwd") | ConvertTo-SecureString
+}
+$global:userCredsAdmin=$(New-Object System.Management.Automation.PSCredential ($global:userNameAdmin, $global:userPasswordAdmin))
+if(!(Test-Path -Path "$($global:currentLocation)\user.pwd" -PathType Leaf)){
+    $global:userPassword=$(Read-Host $(translate "Please enter the password for account $($global:userName)") -AsSecureString)
+    $global:userPassword | ConvertFrom-SecureString | Out-File "$($global:currentLocation)\user.pwd"
+}else{
+    $global:userPassword=$(cat "$($global:currentLocation)\user.pwd") | ConvertTo-SecureString
+}
+$global:userCreds=$(New-Object System.Management.Automation.PSCredential ($global:userName, $global:userPassword))
+
 cd /
 cls
 display "The script is begining!"
+
+if($global:module_Apps){
+    #resetWinApps
+    PSProfile
+    installApps
+}
+$global:StateError=$global:StateError+1000
 
 if($global:module_CleanStartMenuItem){
     transfer $global:AllUserPath $global:UserStartMenuPath
     sortItem $global:UserStartMenuPath
     iniWinX
-}
-$global:StateError=$global:StateError+1000
-
-if($global:module_Apps){
-    <#f($global:Apps_ResetApps){
-        resetWinApps
-    }
-    #removeApps
-    installApps
-    winRShortcut
-    PSProfile $profile $true
-    PSProfile $userProfile $false#>
-    installApps
-    #PSProfile
 }
 $global:StateError=$global:StateError+1000
 
