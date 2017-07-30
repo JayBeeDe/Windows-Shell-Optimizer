@@ -9,7 +9,7 @@ For the hashlnk.exe utility license, see https://github.com/riverar/hashlnk/blob
 
 # todo:
 
--> fix issue with !App sufix
+-> fix issue when saving and runnig credeentials from a different user account: use the key argument for credentials!
 -> add admin support for transfer, sortItem, iniWinX
 - add feature optional features
 - add featue install normal app (from appx package...)
@@ -27,6 +27,7 @@ param (
 $global:currentScript=$MyInvocation.MyCommand.Name
 $global:currentLocation=Split-Path -Path $MyInvocation.MyCommand.Path
 $global:debug=$true
+$global:key=(2,3,56,34,254,222,1,1,2,23,42,54,33,233,1,34,2,7,6,5,35,43,6,6,6,6,6,6,31,33,60,23)
 
 If (!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
     [Security.Principal.WindowsBuiltInRole] "Administrator")){
@@ -122,16 +123,16 @@ if(!(Test-Path -Path $userProfile -PathType Leaf)){
 }
 if(!(Test-Path -Path "$($global:currentLocation)\admin.pwd" -PathType Leaf)){
     $global:userPasswordAdmin=$(Read-Host $(translate "Please enter the password for account $($global:userNameAdmin)") -AsSecureString)
-    $global:userPasswordAdmin | ConvertFrom-SecureString | Out-File "$($global:currentLocation)\admin.pwd"
+    $global:userPasswordAdmin | ConvertFrom-SecureString -key $global:key | Out-File "$($global:currentLocation)\admin.pwd"
 }else{
-    $global:userPasswordAdmin=$(cat "$($global:currentLocation)\admin.pwd") | ConvertTo-SecureString
+    $global:userPasswordAdmin=$(cat "$($global:currentLocation)\admin.pwd") | ConvertTo-SecureString -key $global:key
 }
 $global:userCredsAdmin=$(New-Object System.Management.Automation.PSCredential ($global:userNameAdmin, $global:userPasswordAdmin))
 if(!(Test-Path -Path "$($global:currentLocation)\user.pwd" -PathType Leaf)){
     $global:userPassword=$(Read-Host $(translate "Please enter the password for account $($global:userName)") -AsSecureString)
-    $global:userPassword | ConvertFrom-SecureString | Out-File "$($global:currentLocation)\user.pwd"
+    $global:userPassword | ConvertFrom-SecureString -key $global:key | Out-File "$($global:currentLocation)\user.pwd"
 }else{
-    $global:userPassword=$(cat "$($global:currentLocation)\user.pwd") | ConvertTo-SecureString
+    $global:userPassword=$(cat "$($global:currentLocation)\user.pwd") | ConvertTo-SecureString -key $global:key
 }
 $global:userCreds=$(New-Object System.Management.Automation.PSCredential ($global:userName, $global:userPassword))
 

@@ -51,7 +51,7 @@ $global:Apps_ProfileFooter=
 
 $global:Apps_ListItem=
 @(
-    @("Win32 Apps",$true,
+    @("Win32 Apps",$false,
         @("7-Zip","7zip\7z1604-x64.exe","/S","7z",$true,$false),
         @("FormatFactory","FormatFactory\FFSetup4.1.0.0.exe","/S","ff",$true,$false),
         @("advancedRenamer","advancedRenamer\advanced_renamer_setup.exe","/LANG=fr /NORESTART /VERYSILENT /NOICONS","ar",$true,$false),
@@ -59,8 +59,11 @@ $global:Apps_ListItem=
         @("app","Microsoft.Office.OneNote","test",$true,$false)
         #@("app","arte","test",$true,$true)
     ),
+    @("test",$true,
+        @("app","Microsoft.Office.OneNote","test",$true,$true)
+    ),
     @("Bing Apps",$false,
-        @("app","test",$false,$true),
+        @("app","Microsoft.Office.OneNote","test",$true,$true),
         @("app","Microsoft.BingFinance",$false,$true),
         @("app","Microsoft.BingFoodAndDrink",$false,$true),
         @("app","Microsoft.BingHealthAndFitness",$false,$true),

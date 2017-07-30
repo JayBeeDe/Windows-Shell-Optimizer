@@ -33,9 +33,7 @@ function display($msg, $type = "Information", $disableLog = $false){
 
     if($type -eq "Error"){
         cd $global:currentLocation
-        if($global:debug -eq $false){
-            exit
-        }
+        exit
     }
 }
 
@@ -136,18 +134,25 @@ function checkInList($item, $list){
     return $ret
 }
 
-function resolveMetroApp($appName){
-    $metroAppName=$($target -replace "^.*AppsFolder\\","")
-    try{
-        $metroAppID=$(Get-AppXPackage -User $("$global:userName") | where-object {$_.Name -match ".*$($metroAppName).*"} | Select-Object -First 1 -ErrorAction Stop).PackageFamilyName
-        if($metroAppID -match '.*microsoft.*'){
-            $Shortcut.Arguments="shell:AppsFolder\$($metroAppID)!microsoft.$($metroAppName) $($icon)"
-        }else{
-            $Shortcut.Arguments="shell:AppsFolder\$($metroAppID)!App $($icon)"
+function appToId($appName){
+    write-host "-"
+    write-host $appName
+    $metroAppName=$($appName -replace "^.*AppsFolder\\","")
+    $installedapps=Start-Job -scriptblock {
+        param ($username)
+        Get-AppXPackage
+    } -Args $global:userName -credential $global:userCreds | Wait-Job | Receive-Job
+    $aumidList = @()
+    foreach ($app in $installedapps){
+        foreach ($id in (Get-AppxPackageManifest $app).package.applications.application.id){
+            if($app.PackageFamilyName -match ".*$($metroAppName).*"){
+                write-host "shell:AppsFolder\$($app.PackageFamilyName)!$($id)"
+                return "shell:AppsFolder\$($app.PackageFamilyName)!$($id)"
+            }
         }
-    }catch{
-        $Shortcut.Arguments="$($args2) $($icon)"
     }
+    write-host ">-<"
+    return $appName
 }
 
 function createShortcut($path,$name,$target,$args2,$icon,$hotkey,$description){
@@ -155,48 +160,8 @@ function createShortcut($path,$name,$target,$args2,$icon,$hotkey,$description){
     $WScriptShell = New-Object -ComObject WScript.Shell
     $Shortcut = $WScriptShell.CreateShortcut("$($path)\$($name).lnk")
     if($target -ne $null -and $target -ne ""){
-        if($args2 -match 'shell:AppsFolder\\*'){
-            $Shortcut.TargetPath="%windir%\explorer.exe"
-            echo "is an app"
-            $metroAppName=$($args2 -replace "^.*AppsFolder\\","")
-            $job=Start-Job -scriptblock {
-                param ($username)
-                Get-AppXPackage
-            } -Args $global:userName -credential $global:userCreds
-            $installedapps=$job | Receive-Job
-            #$installedapps = Get-AppXPackage -User $("$global:userName")
-            echo $installedapps
-            $aumidList = @()
-            foreach ($app in $installedapps){
-                foreach ($id in (Get-AppxPackageManifest $app).package.applications.application.id){
-                    if($app.packagefamilyname -match ".*$($metroAppName).*"){
-                        $metroAppID="shell:AppsFolder\$($app.packagefamilyname)!$($id)"
-                        echo "metroAppID is $($metroAppID)"
-                        $Shortcut.Arguments=$metroAppID
-                        break
-                    }
-                }
-            }
-            <#display "metro app name is $($metroAppName)"
-            try{
-                $metroAppID=$(Get-AppXPackage -User $("$global:userName") | where-object {$_.Name -match ".*$($metroAppName).*"} | Select-Object -First 1 -ErrorAction Stop).PackageFamilyName
-                display "metroAppID is $($metroAppID)"
-                if($metroAppID -match '.*microsoft.*'){
-                    $Shortcut.Arguments="shell:AppsFolder\$($metroAppID)!microsoft.$($metroAppName) $($icon)"
-                    display "shell:AppsFolder\$($metroAppID)!microsoft.$($metroAppName) $($icon)"
-                }else{
-                    $Shortcut.Arguments="shell:AppsFolder\$($metroAppID)!App $($icon)"
-                    display "shell:AppsFolder\$($metroAppID)!App $($icon)"
-                }
-            }catch{
-                display "error"
-                $Shortcut.Arguments="$($args2) $($icon)"
-            }#>
-        }else{
-            display "is NOT an app"
-            $Shortcut.TargetPath="$($target)"
-            $Shortcut.Arguments="$($args2)"
-        }
+        $Shortcut.TargetPath="$($target)"
+        $Shortcut.Arguments="$($args2)"
     }
     $ShortCut.WindowStyle=1
     if($icon -ne $null -and $icon -ne ""){
@@ -256,16 +221,26 @@ function iniWinX(){
 }
 
 function resetWinApps(){
-    Get-AppXPackage -User $global:userName | Foreach {
+    Start-Job -scriptblock {
+        param ($username)
+        Get-AppXPackage| Foreach {
+            Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"
+        }
+    } -Args $global:userName -credential $global:userCreds | Wait-Job
+    Start-Job -scriptblock {
+        param ($username)
+        Get-AppXPackage| Foreach {
+            Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"
+        }
+    } -Args $global:userNameAdmin -credential $global:userCredsAdmin | Wait-Job
+    <#Get-AppXPackage -User $global:userName | Foreach {
         Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"
-    }
+    }#>
 }
 
 function PSProfile(){
 #$global:userProfile is for user
 #$global:userProfileAdmin is for admin
-    display "Profile Admin path is set to '$($global:userProfileAdmin)'" "WARNING"
-    display "Profile user path is set to '$($global:userProfile)'" "WARNING"
 
     Get-ChildItem -path "$($global:currentLocation)\PSModules\" | Foreach{
         $snapFile=$_.Name
@@ -279,11 +254,13 @@ function PSProfile(){
     if($global:userPasswordAdmin -eq $null -or $global:userPasswordAdmin -eq ""){
         $global:userPasswordAdmin="empty"
     }
-    $hashed=$($global:userPasswordAdmin | ConvertFrom-SecureString)
+    #$hashed=$($global:userPasswordAdmin | ConvertFrom-SecureString)
+    $hashed=$(cat "$($global:currentLocation)\admin.pwd")
+    $stringKey=$("(",$($global:key -Join ","),")") -Join ""
     $headerProfilePreContent="
 function sudo {
     try{
-        `$secpasswd=`$(`"$hashed`" | ConvertTo-SecureString)
+        `$secpasswd=`$(`"$hashed`" | ConvertTo-SecureString -key $stringKey)
         `$mycreds=New-Object System.Management.Automation.PSCredential(`"$global:userNameAdmin`", `$secpasswd) -ErrorAction Stop
         Start-Process powershell -credential `$mycreds -ErrorAction Stop
         Stop-process -Id `$PID -ErrorAction Stop
@@ -300,14 +277,12 @@ function sudo {
     try{
         #admin
         "" | Out-File -FilePath $global:userProfileAdmin -ErrorAction Stop
-        echo $global:userProfileAdmin
     }catch{
         display "Could not write profile headers into '$($global:userProfileAdmin)'" "ERROR"
     }
     try{
         #non admin
         $headerProfilePreContent | Out-File -FilePath $global:userProfile -ErrorAction Stop
-        echo $global:userProfile
     }catch{
         display "Could not write profile headers into '$($global:userProfile)'" "ERROR"
     }
@@ -325,18 +300,18 @@ function PSProfileItem($alias, $aliasValue){
 #$global:userProfile is for user
 #$global:userProfileAdmin is for admin
     try{
-        $existingAliasDefinition=(Get-Alias -Name ssh -ErrorAction Stop | Select Definition).definition
+        $existingAliasDefinition=(Get-Alias -Name $alias -ErrorAction Stop | Select Definition).definition
     }catch{
         $existingAliasDefinition=$null
     }
     if($existingAliasDefinition -eq $null -or $existingAliasDefinition -ne $aliasValue){
         try{
-            Add-Content -Value "Set-Alias -Name $($alias) -Value `"$($aliasValue)`"" -Path $global:userProfileAdmin -ErrorAction Stop
+            Add-Content -Value "function $($alias){$($aliasValue)}" -Path $global:userProfileAdmin -ErrorAction Stop
         }catch{
             display "Could not set alias for application '$($alias)' into file '$($global:userProfileAdmin)'" "ERROR"
         }
         try{
-            Add-Content -Value "Set-Alias -Name $($alias) -Value `"$($aliasValue)`"" -Path $global:userProfile -ErrorAction Stop
+            Add-Content -Value "function $($alias){$($aliasValue)}" -Path $global:userProfile -ErrorAction Stop
         }catch{
             display "Could not set alias for application '$($alias)' into file '$($global:userProfile)'" "ERROR"
         }
@@ -440,16 +415,21 @@ function installApp($currentApp){
                 #install
                 #missing API... waiting for new stuffs
                 if($winRShortcut -ne $null){
-                    createShortcut "$($env:windir)" "$($winRShortcut)" "%windir%\explorer.exe" "shell:AppsFolder\$($appName)"
                     display "Creating/Checking winR shortcut for '$($appName)'..." "WARNING"
-                    #PSProfileItem "$($winRShortcut)" "$($exePath)"
-                    #display "Adding PS Profile Alias for '$($appName)'..." "WARNING"
+                    display "Adding PS Profile Alias for '$($appName)'..." "WARNING"
+                    $appId=$(appToId $appName)
+                    createShortcut "$($env:windir)" "$($winRShortcut)" "%windir%\explorer.exe" "$appId"
+                    PSProfileItem "$($winRShortcut)" "Start-Process explorer $($appId)"
                 }
             }else{
                 #unistall
                 #to finish: setting must not be mandatory the exact application name: get it above!
                 try{
-                    Get-AppxPackage -User $global:userName -Name $appName | Remove-AppxPackage -ErrorAction Stop   
+                    Start-Job -scriptblock {
+                        param ($username,$app)
+                        Get-AppXPackage | Where-Object {$_.Name -match ".*$($app).*"} | Remove-AppxPackage -ErrorAction Stop
+                    } -Args $global:userName,$appName -credential $global:userCreds -ErrorAction Stop | Wait-Job
+                    #Get-AppxPackage -User $global:userName -Name $appName | Remove-AppxPackage -ErrorAction Stop   
                     display "The Package '$($appName -replace "\."," ")' has been successfully removed (1)!"
                 }catch{
                     try{
@@ -458,7 +438,7 @@ function installApp($currentApp){
                             display "The Package '$($appName -replace "\."," ")' has been successfully removed (2)!"
                         }else{
                             try{
-                                Get-ChildItem -Path "$($env:SystemDrive)\Users\$($global:userName)\AppData\Local\Packages" | Where-Object {$_.Name -match $appName} | foreach{
+                                Get-ChildItem -Path "$($global:userPath)\AppData\Local\Packages" | Where-Object {$_.Name -match $appName} | foreach{
                                     Remove-Item $_.FullName -Recurse -Force -ErrorAction Stop
                                     display "The Package '$($appName -replace "\."," ")' has been successfully removed from $($_.FullName) (3)!"
                                 }
@@ -468,7 +448,7 @@ function installApp($currentApp){
                         }
                     }catch{
                         try{
-                            Get-ChildItem -Path "$($env:SystemDrive)\Users\$($global:userName)\AppData\Local\Packages" | Where-Object {$_.Name -match $appName} | foreach{
+                            Get-ChildItem -Path "$($global:userPath)\AppData\Local\Packages" | Where-Object {$_.Name -match $appName} | foreach{
                                 Remove-Item $_.FullName -Recurse -Force -ErrorAction Stop
                                 display "The Package '$($appName -replace "\."," ")' has been successfully removed from $($_.FullName) (3)!"
                             }
