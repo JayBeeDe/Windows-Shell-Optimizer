@@ -4,10 +4,6 @@ $global:StateError=0
 $global:logName="Application"
 $global:logSource="Installation"
 
-$global:AllUserPath="$($env:SystemDrive)\ProgramData\Microsoft\Windows\Start Menu\Programs"
-$global:UserStartMenuPath="$($global:userPath)\AppData\Roaming\Microsoft\Windows\Start Menu\Programs"
-$global:UserWinXPath="$($global:userPath)\AppData\Local\Microsoft\Windows\WinX"
-
 $global:TranslateAccountKey="a9405b496e35440882154d696d71140c"
 $global:TranslateTokenURL="https://api.cognitive.microsoft.com/sts/v1.0/issueToken"
 $global:TranslateURL="https://api.microsofttranslator.com/v2/Http.svc/Translate"
@@ -29,7 +25,7 @@ $global:CleanStartMenuItem_WinXItem=
     )
 )
 
-$global:module_Apps=$true
+$global:module_Apps=$false
 #Set to false if not Windows 10
 $global:Apps_ResetApps=$false
 $global:Apps_SupressPrompt=$false
@@ -130,7 +126,7 @@ $global:Apps_ListItem=
         @("app","Microsoft.Messaging",$false,$false)
     )
 )
-$global:module_RegistryChanges=$false
+$global:module_RegistryChanges=$true
 $global:RegistryChanges_ShowLogAlreadyDoneItems=$false #also apply to the RegistryCommandStore module
 $global:RegistryChanges_ListItem=
 @(#array must contains at least 2 sub arrays to works
@@ -204,7 +200,7 @@ $global:RegistryChanges_ListItem=
         @("HKEY_CURRENT_USER\Console\Windows PowerShell","PopupColors","0x000000f5",$true),
         @("HKEY_CURRENT_USER\Console\Windows PowerShell","ScreenBufferSize","0x03e80090",$true),
         @("HKEY_CURRENT_USER\Console\Windows PowerShell","ScreenColors","0x0000009f",$true),
-        @("HKEY_USERS\S-1-5-21-3873392172-3210682932-941722621-500\Console\Windows PowerShell","ScreenColors","0x0000006f",$true),
+        @("HKEY_USERS\S-1-5-21-3873392172-3210682932-941722621-500\Console\Windows PowerShell","ScreenColors","0x000000cf",$true),
         @("HKEY_CURRENT_USER\Console\Windows PowerShell","WindowAlpha","0x000000c1",$true),
         @("HKEY_CURRENT_USER\Console\Windows PowerShell","WindowPosition","0x00000000",$true),
         @("HKEY_CURRENT_USER\Console\Windows PowerShell","WindowSize","0x00320092",$true),

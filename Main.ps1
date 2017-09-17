@@ -9,13 +9,20 @@ For the hashlnk.exe utility license, see https://github.com/riverar/hashlnk/blob
 
 # todo:
 
--> fix issue when saving and runnig credeentials from a different user account: use the key argument for credentials!
+? fix issue when saving and runnig credeentials from a different user account: use the key argument for credentials!
+
 -> add admin support for transfer, sortItem, iniWinX
 - add feature optional features
-- add featue install normal app (from appx package...)
+
 - install should find automatically path after install : ok but to exe not to folder!
-- strange thing: installing software: get the uninstaller just after installing?? wtf?
 - when installing software that MAY HAVE BEEN installed: do not exit the program. There are other softwares to install after!
+
+- add featue install normal app (from appx package...)
+- strange thing: installing software: get the uninstaller just after installing?? wtf?
+- abonnement to Azure has expired! Maybee the translate module will need to be redevelopped!
+
+- Admin check doesn't work when already admin -> OK
+- Admin prompt for Credentials -> OK
 #>
 
 param (
@@ -45,7 +52,9 @@ If (!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]
             Exit
         }
         try{
+            write-host "start-process powershell -ArgumentList -noexit,&'$($global:currentLocation)\$($global:currentScript)' -userName '$($env:USERNAME)' -userPath '$($env:userprofile)' -userProfile '$($profile)' -usersid '$($userSID)' -Verb RunAs -ErrorAction Stop"
             start-process powershell -ArgumentList "-noexit","&'$($global:currentLocation)\$($global:currentScript)' -userName '$($env:USERNAME)' -userPath '$($env:userprofile)' -userProfile '$($profile)' -usersid '$($userSID)'" -Verb RunAs -ErrorAction Stop
+            #start-process powershell -ArgumentList "-noexit","&'$($global:currentLocation)\$($global:currentScript)' -userName '$($env:USERNAME)' -userPath '$($env:userprofile)' -userProfile '$($profile)' -usersid '$($userSID)'" -Verb RunAs -ErrorAction Stop
         }catch{
             Write-Host "You don't have the permissions, or the credentials you have given are wrong!" -ForegroundColor red
         }
@@ -110,6 +119,7 @@ if(!(Test-Path -Path $userPath -PathType Container)){
     display "This specified user has no path in $($userPath)" "ERROR"
 }else{
     $global:userPath=$userPath
+    display "userPath global is $($global:userPath)"
 }
 if(!(Test-Path -Path $profile -PathType Leaf)){
     display "This admin user has no profile in $($profile)" "ERROR"
@@ -136,9 +146,22 @@ if(!(Test-Path -Path "$($global:currentLocation)\user.pwd" -PathType Leaf)){
 }
 $global:userCreds=$(New-Object System.Management.Automation.PSCredential ($global:userName, $global:userPassword))
 
+$global:AllUserPath="$($env:SystemDrive)\ProgramData\Microsoft\Windows\Start Menu\Programs"
+$global:UserStartMenuPath="$($global:userPath)\AppData\Roaming\Microsoft\Windows\Start Menu\Programs"
+$global:UserWinXPath="$($global:userPath)\AppData\Local\Microsoft\Windows\WinX"
+try{
+    $global:adminGroup=$(gwmi win32_group -filter "LocalAccount = $TRUE And SID = 'S-1-5-32-544'" -ErrorAction Stop | select -expand name)
+}catch{
+    display "Error while trying to get Admin Group Name!" "ERROR"
+}
+
 cd /
 cls
 display "The script is begining!"
+
+<#$appName="Settings"
+display $appName
+display "$(appToId $appName)"#>
 
 if($global:module_Apps){
     #resetWinApps

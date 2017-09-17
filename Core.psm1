@@ -135,7 +135,6 @@ function checkInList($item, $list){
 }
 
 function appToId($appName){
-    write-host "-"
     write-host $appName
     $metroAppName=$($appName -replace "^.*AppsFolder\\","")
     $installedapps=Start-Job -scriptblock {
@@ -151,7 +150,6 @@ function appToId($appName){
             }
         }
     }
-    write-host ">-<"
     return $appName
 }
 
@@ -192,6 +190,7 @@ function iniWinX(){
         if($i -lt 3){
             $group="Group$($i+1)"
             $path="$($global:UserWinXPath)\$($group)"
+            display "group $group path $path" "Warning"
             if(!(Test-Path -Path $path -PathType Container)){
                 try{
                     New-Item -Path $global:UserWinXPath -Name $group -ItemType Directory -ErrorAction Stop | Out-Null
@@ -768,8 +767,14 @@ function keyChanges(){
                 if($global:RegistryChanges_ListItem[$i][$ii].length -eq 2 -Or $global:RegistryChanges_ListItem[$i][$ii].length -eq 3){
                     if($global:RegistryChanges_ListItem[$i][$ii][1] -eq $true){
                         if($global:RegistryChanges_ListItem[$i][$ii][0] -match "^HKEY_CURRENT_USER.*"){
-                            SetRegistryKey $($global:RegistryChanges_ListItem[$i][$ii][0] -replace "^HKEY_CURRENT_USER","HKEY_USERS\$($global:userSIDAdmin)")
-                            SetRegistryKey $($global:RegistryChanges_ListItem[$i][$ii][0] -replace "^HKEY_CURRENT_USER","HKEY_USERS\$($global:userSID)")
+                            display "Admin Key"
+                            $newAdminKey=$($global:RegistryChanges_ListItem[$i][$ii][0] -replace "^HKEY_CURRENT_USER","HKEY_USERS\$global:userSIDAdmin")
+                            display  $newAdminKey
+                            SetRegistryKey $newAdminKey
+                            display "User Key"
+                            $newKey=$($global:RegistryChanges_ListItem[$i][$ii][0] -replace "^HKEY_CURRENT_USER","HKEY_USERS\$global:userSID")
+                            display $newKey
+                            SetRegistryKey $newKey
                         }else{
                             SetRegistryKey $global:RegistryChanges_ListItem[$i][$ii][0]
                         }
@@ -836,7 +841,6 @@ function commandStore(){
 
 ########### begining registry functions
 
-$global:adminGroup=translate "Administrators"
 $global:rights="FullControl"
 $global:propagationFlag="none"
 $global:inheritanceFlag="ContainerInherit"
