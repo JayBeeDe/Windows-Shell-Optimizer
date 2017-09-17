@@ -11,9 +11,7 @@ For the hashlnk.exe utility license, see https://github.com/riverar/hashlnk/blob
 
 ? fix issue when saving and runnig credeentials from a different user account: use the key argument for credentials!
 
--> add admin support for transfer, sortItem, iniWinX
-- add feature optional features
-
+- installApps needs to be checked please!
 - install should find automatically path after install : ok but to exe not to folder!
 - when installing software that MAY HAVE BEEN installed: do not exit the program. There are other softwares to install after!
 
@@ -23,6 +21,7 @@ For the hashlnk.exe utility license, see https://github.com/riverar/hashlnk/blob
 
 - Admin check doesn't work when already admin -> OK
 - Admin prompt for Credentials -> OK
+- Admin profile path doesn't work when non admin -> OK
 #>
 
 param (
@@ -52,7 +51,7 @@ If (!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]
             Exit
         }
         try{
-            write-host "start-process powershell -ArgumentList -noexit,&'$($global:currentLocation)\$($global:currentScript)' -userName '$($env:USERNAME)' -userPath '$($env:userprofile)' -userProfile '$($profile)' -usersid '$($userSID)' -Verb RunAs -ErrorAction Stop"
+            #write-host "start-process powershell -ArgumentList -noexit,&'$($global:currentLocation)\$($global:currentScript)' -userName '$($env:USERNAME)' -userPath '$($env:userprofile)' -userProfile '$($profile)' -usersid '$($userSID)' -Verb RunAs -ErrorAction Stop"
             start-process powershell -ArgumentList "-noexit","&'$($global:currentLocation)\$($global:currentScript)' -userName '$($env:USERNAME)' -userPath '$($env:userprofile)' -userProfile '$($profile)' -usersid '$($userSID)'" -Verb RunAs -ErrorAction Stop
             #start-process powershell -ArgumentList "-noexit","&'$($global:currentLocation)\$($global:currentScript)' -userName '$($env:USERNAME)' -userPath '$($env:userprofile)' -userProfile '$($profile)' -usersid '$($userSID)'" -Verb RunAs -ErrorAction Stop
         }catch{
@@ -148,7 +147,9 @@ $global:userCreds=$(New-Object System.Management.Automation.PSCredential ($globa
 
 $global:AllUserPath="$($env:SystemDrive)\ProgramData\Microsoft\Windows\Start Menu\Programs"
 $global:UserStartMenuPath="$($global:userPath)\AppData\Roaming\Microsoft\Windows\Start Menu\Programs"
+$global:AdminStartMenuPath="$($global:userPathAdmin)\AppData\Roaming\Microsoft\Windows\Start Menu\Programs"
 $global:UserWinXPath="$($global:userPath)\AppData\Local\Microsoft\Windows\WinX"
+$global:AdminWinXPath="$($global:userPathAdmin)\AppData\Local\Microsoft\Windows\WinX"
 try{
     $global:adminGroup=$(gwmi win32_group -filter "LocalAccount = $TRUE And SID = 'S-1-5-32-544'" -ErrorAction Stop | select -expand name)
 }catch{
@@ -159,21 +160,23 @@ cd /
 cls
 display "The script is begining!"
 
-<#$appName="Settings"
-display $appName
-display "$(appToId $appName)"#>
-
 if($global:module_Apps){
-    #resetWinApps
     PSProfile
     installApps
+    if ($global:Apps_ResetApps -eq $true){
+        resetWinApps
+    }
+    optionalFeatures
 }
 $global:StateError=$global:StateError+1000
 
 if($global:module_CleanStartMenuItem){
     transfer $global:AllUserPath $global:UserStartMenuPath
+    transfer $global:AllUserPath $global:AdminStartMenuPath
     sortItem $global:UserStartMenuPath
-    iniWinX
+    sortItem $global:AdminStartMenuPath
+    iniWinX $global:UserWinXPath
+    iniWinX $global:AdminWinXPath
 }
 $global:StateError=$global:StateError+1000
 

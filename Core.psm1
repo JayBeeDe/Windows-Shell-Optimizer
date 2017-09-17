@@ -174,7 +174,7 @@ function createShortcut($path,$name,$target,$args2,$icon,$hotkey,$description){
     }
     $Shortcut.Save()
 
-    if($path -match '$($global:UserWinXPath)*'){
+    if($path -match '$($global:UserWinXPath)*' -or $path -match '$($global:AdminWinXPath)*'){
         if(Test-Path "$($global:currentLocation)\hashlnk.exe"){
             &"$($global:currentLocation)\hashlnk.exe" "$($path)\$($name).lnk" | Out-Null
         }else{
@@ -183,33 +183,33 @@ function createShortcut($path,$name,$target,$args2,$icon,$hotkey,$description){
     }
 }
 
-function iniWinX(){
-    Remove-Item -Path "$($global:UserWinXPath)\*" -Recurse -Force | Out-Null
+function iniWinX($path){
+    Remove-Item -Path "$($path)\*" -Recurse -Force | Out-Null
     
     For ($i=0; $i -lt $global:CleanStartMenuItem_WinXItem.length; $i++){
         if($i -lt 3){
             $group="Group$($i+1)"
-            $path="$($global:UserWinXPath)\$($group)"
-            display "group $group path $path" "Warning"
-            if(!(Test-Path -Path $path -PathType Container)){
+            $userPath="$($path)\$($group)"
+            display "group $group path $userPath" "Warning"
+            if(!(Test-Path -Path $userPath -PathType Container)){
                 try{
-                    New-Item -Path $global:UserWinXPath -Name $group -ItemType Directory -ErrorAction Stop | Out-Null
+                    New-Item -Path $path -Name $group -ItemType Directory -ErrorAction Stop | Out-Null
                 }catch{
                     display "An error as occured while creating the '$($group)' directory!" "Warning"
                 }
             }
             if($i -eq 0){
-                createShortcut $path "01 - Desktop" "%windir%\explorer.exe" "shell:::{3080F90D-D7AD-11D9-BD98-0000947B0257}"
+                createShortcut $userPath "01 - Desktop" "%windir%\explorer.exe" "shell:::{3080F90D-D7AD-11D9-BD98-0000947B0257}"
             }
             For($ii=1; $ii -lt $global:CleanStartMenuItem_WinXItem[$i].Length; $ii++){
                 if($global:CleanStartMenuItem_WinXItem[$i][$ii][0] -match ".*Windows PowerShell.*" -and $global:CleanStartMenuItem_WinXItem[$i][$ii][0] -notmatch ".*ISE.*"){
-                    createShortcut $path "$($($ii+1).ToString("00"))b - $($global:CleanStartMenuItem_WinXItem[$i][$ii][0])" $global:CleanStartMenuItem_WinXItem[$i][$ii][1] $global:CleanStartMenuItem_WinXItem[$i][$ii][2]
-                    createShortcut $path "$($($ii+1).ToString("00"))a - Command Prompt" "%windir%\system32\cmd.exe"
+                    createShortcut $userPath "$($($ii+1).ToString("00"))b - $($global:CleanStartMenuItem_WinXItem[$i][$ii][0])" $global:CleanStartMenuItem_WinXItem[$i][$ii][1] $global:CleanStartMenuItem_WinXItem[$i][$ii][2]
+                    createShortcut $userPath "$($($ii+1).ToString("00"))a - Command Prompt" "%windir%\system32\cmd.exe"
                 }elseif($global:CleanStartMenuItem_WinXItem[$i][$ii][0] -match ".*Command Prompt.*"){
-                    createShortcut $path "$($($ii+1).ToString("00"))a - $($global:CleanStartMenuItem_WinXItem[$i][$ii][0])" $global:CleanStartMenuItem_WinXItem[$i][$ii][1] $global:CleanStartMenuItem_WinXItem[$i][$ii][2]
-                    createShortcut $path "$($($ii+1).ToString("00"))b - Windows PowerShell" "%windir%\system32\WindowsPowerShell\v1.0\powershell.exe"
+                    createShortcut $userPath "$($($ii+1).ToString("00"))a - $($global:CleanStartMenuItem_WinXItem[$i][$ii][0])" $global:CleanStartMenuItem_WinXItem[$i][$ii][1] $global:CleanStartMenuItem_WinXItem[$i][$ii][2]
+                    createShortcut $userPath "$($($ii+1).ToString("00"))b - Windows PowerShell" "%windir%\system32\WindowsPowerShell\v1.0\powershell.exe"
                 }else{
-                    createShortcut $path "$($($ii+1).ToString("00")) - $($global:CleanStartMenuItem_WinXItem[$i][$ii][0])" $global:CleanStartMenuItem_WinXItem[$i][$ii][1] $global:CleanStartMenuItem_WinXItem[$i][$ii][2]
+                    createShortcut $userPath "$($($ii+1).ToString("00")) - $($global:CleanStartMenuItem_WinXItem[$i][$ii][0])" $global:CleanStartMenuItem_WinXItem[$i][$ii][1] $global:CleanStartMenuItem_WinXItem[$i][$ii][2]
                 }
             }
         }else{
@@ -336,12 +336,77 @@ function installApps(){
                     $appName=$_[$ii][0]
                 }
                 Write-Progress -Id 1 -ParentId 0 -Activity $(translate $activity) `
-                -Status "$([math]::Round((($_.IndexOf($_[$ii])-2)/($_.length-3)*100),2))% - $(translate "Working on") $appName" `
-                -PercentComplete $(($_.IndexOf($_[$ii])-2)/($_.length-3)*100)
+                -Status "$([math]::Round((($_.IndexOf($_[$ii])-2)/($_.length-2)*100),2))% - $(translate "Working on") $appName" `
+                -PercentComplete $(($_.IndexOf($_[$ii])-2)/($_.length-2)*100)
                 installApp $_[$ii]
             }
         }
         $i++
+    }
+}
+
+function optionalFeatures(){
+    $i=0
+    try{
+        display "Getting List of optional features..." "warning"
+        $optionalFeaturesList=$(get-windowsoptionalfeature -online -ErrorAction Stop)
+        $global:Apps_OptionalFeatures | ForEach {
+            Write-Progress -Id 0 -Activity $(translate "Installing/Removing Optional Features") `
+            -Status "$([math]::Round(($global:Apps_OptionalFeatures.IndexOf($_)/($global:Apps_OptionalFeatures.length-1)*100),2))% - $(translate "Working on group") $($_[0])" `
+            -PercentComplete $($global:Apps_OptionalFeatures.IndexOf($_)/($global:Apps_OptionalFeatures.length-1)*100)
+            if($_[1] -eq $true){
+                For ($ii=2; $ii -lt $_.length; $ii++) {
+                    $feature="$($_[$ii][0])"
+                    if($_[$ii].length -eq 3){
+                        $install="$($_[$ii][1])"
+                        $enable="$($_[$ii][2])"
+                    }else{
+                        $install=$true
+                        $enable="$($_[$ii][1])"
+                    }
+                    if($install -eq $true){
+                        $activity="Installing Feature"
+                    }else{
+                        $activity="Removing Feature"
+                    }                    
+                    $status=$($optionalFeaturesList | Where-Object {$_.FeatureName -match "$($feature -replace ' ','-')"}).State
+                    $feature=$($optionalFeaturesList | Where-Object {$_.FeatureName -match "$($feature -replace ' ','-')"}).FeatureName
+
+                    Write-Progress -Id 1 -ParentId 0 -Activity $(translate $activity) `
+                    -Status "$([math]::Round((($_.IndexOf($_[$ii])-2)/($_.length-2)*100),2))% - $(translate "Working on") $feature" `
+                    -PercentComplete $(($_.IndexOf($_[$ii])-2)/($_.length-2)*100)
+
+                    if ($status -eq "Enabled"){
+                        if ($install -eq $false){
+                            try{
+                                Disable-WindowsOptionalFeature -Online -FeatureName $feature -ErrorAction Stop -NoRestart | Out-Null
+                                display "Feature $($feature) uninstalled!"
+                            }catch{
+                                display "Error while trying to uninstall the feature $($feature)!" "warning"
+                            }
+                        }else{
+                            display "Feature $($feature) has already been installed!" "Warning"
+                        }
+                    }elseIf ($status -eq "Disabled"){
+                        if ($install -eq $true){
+                            try{
+                                Enable-WindowsOptionalFeature -Online -FeatureName $feature -ErrorAction Stop -NoRestart | Out-Null
+                                display "Feature $($feature) installed!"
+                            }catch{
+                                display "Error while trying to install the feature $($feature)!" "warning"
+                            }
+                        }else{
+                            display "Feature $($feature) has already been uninstalled!" "Warning"
+                        }
+                    }else{
+                        display "Error while getting status of $($feature)" "Warning"
+                    }
+                }
+            }
+            $i++
+        }
+    }catch{
+        display "Error while getting list of optional features" "error"
     }
 }
 

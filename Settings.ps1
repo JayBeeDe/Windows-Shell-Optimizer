@@ -28,7 +28,6 @@ $global:CleanStartMenuItem_WinXItem=
 $global:module_Apps=$false
 #Set to false if not Windows 10
 $global:Apps_ResetApps=$false
-$global:Apps_SupressPrompt=$false
 $global:Apps_InstallerDirectory="D:\Downloads\"
 $global:Apps_MaxTimeOut=40
 
@@ -45,10 +44,23 @@ $global:Apps_ProfileFooter=
     @("Set-Alias ip 'Get-NetIPConfiguration'", $true, "set alias for get net Get-NetIPConfiguration")
 )
 
+$global:Apps_OptionalFeatures=
+@(
+    @("Media Features",$false,
+        @("internet explorer",$true),
+        @("SNMP",$true)
+    ),
+    @("Media Features2",$true,
+        @("internet explorer",$true),
+        @("SNMP",$true)
+    )
+)
+
+
 $global:Apps_ListItem=
 @(
     @("Win32 Apps",$false,
-        @("7-Zip","7zip\7z1604-x64.exe","/S","7z",$true,$false),
+        @("7-Zip","7zip\7z1604-x64.exe","/S","7z",$false,$true),
         @("FormatFactory","FormatFactory\FFSetup4.1.0.0.exe","/S","ff",$true,$false),
         @("advancedRenamer","advancedRenamer\advanced_renamer_setup.exe","/LANG=fr /NORESTART /VERYSILENT /NOICONS","ar",$true,$false),
         @("VLC","VLC\vlc-2.2.6-win32.exe","/S /L=1036","$($env:SystemDrive)\Program Files (x86)\VideoLAN\VLC","vlc","$($global:userPath)\AppData\Roaming\vlc",$true,$false),
@@ -126,7 +138,7 @@ $global:Apps_ListItem=
         @("app","Microsoft.Messaging",$false,$false)
     )
 )
-$global:module_RegistryChanges=$true
+$global:module_RegistryChanges=$false
 $global:RegistryChanges_ShowLogAlreadyDoneItems=$false #also apply to the RegistryCommandStore module
 $global:RegistryChanges_ListItem=
 @(#array must contains at least 2 sub arrays to works
@@ -521,15 +533,6 @@ $global:RegistryChanges_ListItem=
         @("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\  OCOKShared",$true,"OwnCloud"),
         @("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\  OCSync",$true,"OwnCloud"),
         @("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\  OCWarning",$true,"OwnCloud")
-    )
-)
-
-
-$global:module_InstallSoftware=$false
-$global:InstallSoftware_OptionalFeatures=
-@(
-    @("Media Features",$false,
-        @("Windows.cmd",$true)
     )
 )
 
