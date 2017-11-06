@@ -8,7 +8,7 @@ $global:TranslateAccountKey="a9405b496e35440882154d696d71140c"
 $global:TranslateTokenURL="https://api.cognitive.microsoft.com/sts/v1.0/issueToken"
 $global:TranslateURL="https://api.microsofttranslator.com/v2/Http.svc/Translate"
 
-$global:module_CleanStartMenuItem=$false
+$global:module_CleanStartMenuItem=$true
 $global:CleanStartMenuItem_ExcludedFolder="Tool", "Accessor", "Startup", "Windows PowerShell"
 $global:CleanStartMenuItem_ExcludedItem="Help", "Uninstall", "Download Center", "Adobe Bridge", "Adobe ExtendScript Toolkit", "Adobe Extension Manager", "Brother", "skinned", "About", "Check", "Configure", "\.url", "\.txt", "Preference", "Forum", "HomePage", "License", "Documentation", "Website", "Magnify", "Narrator", "Silverlight"
 
@@ -17,7 +17,6 @@ $global:CleanStartMenuItem_WinXItem=
 @(
     @("First Group",
         @("Run","%windir%\explorer.exe","shell:::{2559a1f3-21d7-11d4-bdaf-00c04f60b9f0}"),
-        @("Control Panel", "%windir%\system32\control.exe"),
         @("Windows Mobility Center", "%windir%\system32\mblctr.exe")
     ),
     @("Second Group",
@@ -25,7 +24,7 @@ $global:CleanStartMenuItem_WinXItem=
     )
 )
 
-$global:module_Apps=$false
+$global:module_Apps=$true
 #Set to false if not Windows 10
 $global:Apps_ResetApps=$false
 $global:Apps_InstallerDirectory="D:\Downloads\"
@@ -46,13 +45,13 @@ $global:Apps_ProfileFooter=
 
 $global:Apps_OptionalFeatures=
 @(
-    @("Media Features",$false,
-        @("internet explorer",$true),
-        @("SNMP",$true)
+    @("Media Features",$true,
+        @("Internet-Explorer-Optional-amd64",$false,$true),
+        @("SNMP",$false,$true)
     ),
-    @("Media Features2",$true,
-        @("internet explorer",$true),
-        @("SNMP",$true)
+    @("Media Features 2",$true,
+        @("Internet-Explorer-Optional-amd64",$false,$true),
+        @("SNMP",$false,$true)
     )
 )
 
@@ -138,7 +137,7 @@ $global:Apps_ListItem=
         @("app","Microsoft.Messaging",$false,$false)
     )
 )
-$global:module_RegistryChanges=$false
+$global:module_RegistryChanges=$true
 $global:RegistryChanges_ShowLogAlreadyDoneItems=$false #also apply to the RegistryCommandStore module
 $global:RegistryChanges_ListItem=
 @(#array must contains at least 2 sub arrays to works
@@ -212,7 +211,7 @@ $global:RegistryChanges_ListItem=
         @("HKEY_CURRENT_USER\Console\Windows PowerShell","PopupColors","0x000000f5",$true),
         @("HKEY_CURRENT_USER\Console\Windows PowerShell","ScreenBufferSize","0x03e80090",$true),
         @("HKEY_CURRENT_USER\Console\Windows PowerShell","ScreenColors","0x0000009f",$true),
-        @("HKEY_USERS\S-1-5-21-3873392172-3210682932-941722621-500\Console\Windows PowerShell","ScreenColors","0x000000cf",$true),
+        @("HKEY_USERS\S-1-5-21-3873392172-3210682932-941722621-500\Console\Windows PowerShell","ScreenColors","0x0000004f",$true),
         @("HKEY_CURRENT_USER\Console\Windows PowerShell","WindowAlpha","0x000000c1",$true),
         @("HKEY_CURRENT_USER\Console\Windows PowerShell","WindowPosition","0x00000000",$true),
         @("HKEY_CURRENT_USER\Console\Windows PowerShell","WindowSize","0x00320092",$true),
@@ -225,10 +224,11 @@ $global:RegistryChanges_ListItem=
         @("HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","PopupColors","0x000000f5",$true),
         @("HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","ScreenBufferSize","0x03e80090",$true),
         @("HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","ScreenColors","0x0000009f",$true),
-        @("HKEY_USERS\S-1-5-21-3873392172-3210682932-941722621-500\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","ScreenColors","0x0000006f",$true),
+        @("HKEY_USERS\S-1-5-21-3873392172-3210682932-941722621-500\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","ScreenColors","0x0000004f",$true),
         @("HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","WindowAlpha","0x000000c1",$true),
         @("HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","WindowPosition","0x00000000",$true),
         @("HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe","WindowSize","0x00320092",$true)
+
     ),
     @("Contextual Menu - Graphics",$true,
         @("HKEY_CLASSES_ROOT\Directory\Background\shellex\ContextMenuHandlers\ACE",$true),
@@ -261,7 +261,10 @@ $global:RegistryChanges_ListItem=
         @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{A0953C92-50DC-43bf-BE83-3742FED03C9C}",$true,"Remove Videos namespace 1/4"),
         @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{f86fa3ab-70d2-4fc7-9c99-fcbf05467f3a}",$true,"Remove Videos namespace 2/4"),
         @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{A0953C92-50DC-43bf-BE83-3742FED03C9C}",$true,"Remove Videos namespace 3/4"),
-        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{f86fa3ab-70d2-4fc7-9c99-fcbf05467f3a}",$true,"Remove Videos namespace 4/4")
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{f86fa3ab-70d2-4fc7-9c99-fcbf05467f3a}",$true,"Remove Videos namespace 4/4"),
+
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{0DB7E03F-FC29-4DC6-9020-FF41B59E513A}",$true,"Remove 3D-Objects namespace 1/2"),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{0DB7E03F-FC29-4DC6-9020-FF41B59E513A}",$true,"Remove 3D-Objects namespace 2/2")
     ),
     @("Desktop Others",$true,
         @("HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System",

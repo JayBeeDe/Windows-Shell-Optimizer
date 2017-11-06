@@ -190,7 +190,6 @@ function iniWinX($path){
         if($i -lt 3){
             $group="Group$($i+1)"
             $userPath="$($path)\$($group)"
-            display "group $group path $userPath" "Warning"
             if(!(Test-Path -Path $userPath -PathType Container)){
                 try{
                     New-Item -Path $path -Name $group -ItemType Directory -ErrorAction Stop | Out-Null
@@ -356,6 +355,7 @@ function optionalFeatures(){
             -PercentComplete $($global:Apps_OptionalFeatures.IndexOf($_)/($global:Apps_OptionalFeatures.length-1)*100)
             if($_[1] -eq $true){
                 For ($ii=2; $ii -lt $_.length; $ii++) {
+                    sleep 1
                     $feature="$($_[$ii][0])"
                     if($_[$ii].length -eq 3){
                         $install="$($_[$ii][1])"
@@ -371,6 +371,7 @@ function optionalFeatures(){
                     }                    
                     $status=$($optionalFeaturesList | Where-Object {$_.FeatureName -match "$($feature -replace ' ','-')"}).State
                     $feature=$($optionalFeaturesList | Where-Object {$_.FeatureName -match "$($feature -replace ' ','-')"}).FeatureName
+                    display "Working on $($feature)" "warning"
 
                     Write-Progress -Id 1 -ParentId 0 -Activity $(translate $activity) `
                     -Status "$([math]::Round((($_.IndexOf($_[$ii])-2)/($_.length-2)*100),2))% - $(translate "Working on") $feature" `

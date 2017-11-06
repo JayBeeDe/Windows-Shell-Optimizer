@@ -9,7 +9,7 @@ For the hashlnk.exe utility license, see https://github.com/riverar/hashlnk/blob
 
 # todo:
 
-? fix issue when saving and runnig credeentials from a different user account: use the key argument for credentials!
+? fix issue when saving and runnig credentials from a different user account: use the key argument for credentials!
 
 - installApps needs to be checked please!
 - install should find automatically path after install : ok but to exe not to folder!
@@ -19,9 +19,6 @@ For the hashlnk.exe utility license, see https://github.com/riverar/hashlnk/blob
 - strange thing: installing software: get the uninstaller just after installing?? wtf?
 - abonnement to Azure has expired! Maybee the translate module will need to be redevelopped!
 
-- Admin check doesn't work when already admin -> OK
-- Admin prompt for Credentials -> OK
-- Admin profile path doesn't work when non admin -> OK
 #>
 
 param (
