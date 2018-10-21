@@ -23,34 +23,30 @@ For the hashlnk.exe utility license, see https://github.com/riverar/hashlnk/blob
 
 param (
    [string]$userName,
-   [string]$userProfile,
-   [string]$userPath,
-   [string]$userSID
+   [string]$userProfile
 )
 $global:currentScript=$MyInvocation.MyCommand.Name
 $global:currentLocation=Split-Path -Path $MyInvocation.MyCommand.Path
 $global:debug=$true
 $global:key=(2,3,56,34,254,222,1,1,2,23,42,54,33,233,1,34,2,7,6,5,35,43,6,6,6,6,6,6,31,33,60,23)
 
+if ($userName -eq $null -or $userName -eq "" ){
+    $userName=$env:USERNAME
+    display "$userName has been automatically set to $($userName)" "WARNING"
+}
 If (!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
     [Security.Principal.WindowsBuiltInRole] "Administrator")){
     $Answ=$null
     While ($Answ -ne "Y" -and $Answ -ne "N"){
-        cls
         Write-Host "This script is not running as administrator. Do you want to run it as administrator? Note : You must accept the UAC prompt" -ForegroundColor Yellow
         $Answ=read-host "[Y/N]"
+        cls
     }
     if($Answ -eq "Y"){
         try{
-            $userSID=(New-Object System.Security.Principal.NTAccount($env:USERNAME) -ErrorAction Stop).Translate([System.Security.Principal.SecurityIdentifier]).value
-        }catch{
-            write-host "Could not find a user SID for user $($env:USERNAME)" -ForegroundColor Red
-            Exit
-        }
-        try{
-            #write-host "start-process powershell -ArgumentList -noexit,&'$($global:currentLocation)\$($global:currentScript)' -userName '$($env:USERNAME)' -userPath '$($env:userprofile)' -userProfile '$($profile)' -usersid '$($userSID)' -Verb RunAs -ErrorAction Stop"
-            start-process powershell -ArgumentList "-noexit","&'$($global:currentLocation)\$($global:currentScript)' -userName '$($env:USERNAME)' -userPath '$($env:userprofile)' -userProfile '$($profile)' -usersid '$($userSID)'" -Verb RunAs -ErrorAction Stop
-            #start-process powershell -ArgumentList "-noexit","&'$($global:currentLocation)\$($global:currentScript)' -userName '$($env:USERNAME)' -userPath '$($env:userprofile)' -userProfile '$($profile)' -usersid '$($userSID)'" -Verb RunAs -ErrorAction Stop
+            #write-host "start-process powershell -ArgumentList -noexit,&'$($global:currentLocation)\$($global:currentScript)' -userName '$($userName)' -userProfile '$($profile)'' -Verb RunAs -ErrorAction Stop"
+            start-process powershell -ArgumentList "-noexit","&'$($global:currentLocation)\$($global:currentScript)' -userName '$($userName)' -userProfile '$($profile)'" -Verb RunAs -ErrorAction Stop
+            #start-process powershell -ArgumentList "-noexit","&'$($global:currentLocation)\$($global:currentScript)' -userName '$($userName)' -userProfile '$($profile)'" -Verb RunAs -ErrorAction Stop
         }catch{
             Write-Host "You don't have the permissions, or the credentials you have given are wrong!" -ForegroundColor red
         }
@@ -91,41 +87,54 @@ $global:systemLanguage="en"
 #force to English
 
 $global:userNameAdmin=$env:USERNAME
-if($userName -eq $null -Or $userName -eq ""){
-    display "This user must be specified by the arg -user <username>!" "ERROR"
-}else{
-    $global:userName=$userName
-}
+$global:userName=$userName
 try{
     $global:userSIDAdmin=(New-Object System.Security.Principal.NTAccount($global:userNameAdmin) -ErrorAction Stop).Translate([System.Security.Principal.SecurityIdentifier]).value
+    display "userSIDAdmin is $($global:userSIDAdmin)"
 }catch{
-    display "Could not find a user SID for user $($global:userNameAdmin)" "ERROR"
+    display "Could not find a userSID for admin user $($global:userNameAdmin)" "ERROR"
 }
-if($userSID -eq $null -Or $userSID -eq ""){
-    display "This user SID must be specified by the arg -userSID <userSID>!" "ERROR"
-}else{
-    $global:userSID=$userSID
+try{
+    $global:userSID=(New-Object System.Security.Principal.NTAccount($global:userName) -ErrorAction Stop).Translate([System.Security.Principal.SecurityIdentifier]).value
+    display "userSID is $($global:userSID)"
+}catch{
+    display "Could not get the userSID for user $($global:userName)" "ERROR"
 }
-if(!(Test-Path -Path $env:userprofile -PathType Container)){
-    display "This admin user has no path in $($env:userprofile)" "ERROR"
-}else{
-    $global:userPathAdmin=$env:userprofile
+try{
+    $global:userPathAdmin=$(Get-ItemPropertyValue -LiteralPath "$($global:prefix)HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$($global:userSIDAdmin)" -Name ProfileImagePath -ErrorAction Stop)
+}catch{
+    display "Could not get the userPathAdmin for admin user $($global:userNameAdmin)" "ERROR"
 }
-if(!(Test-Path -Path $userPath -PathType Container)){
-    display "This specified user has no path in $($userPath)" "ERROR"
+try{
+    $global:userPath=$(Get-ItemPropertyValue -LiteralPath "$($global:prefix)HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$($global:userSID)" -Name ProfileImagePath -ErrorAction Stop)
+}catch{
+    display "Could not get the userPath for user $($global:userName)" "ERROR"
+}
+if(!(Test-Path -Path $global:userPathAdmin -PathType Container)){
+    display "The admin user $($global:userNameAdmin) has no path in $($global:userPathAdmin)" "ERROR"
 }else{
-    $global:userPath=$userPath
-    display "userPath global is $($global:userPath)"
+    display "userPathAdmin is $($global:userPathAdmin) for user $($global:userNameAdmin)"
+}
+if(!(Test-Path -Path $global:userPath -PathType Container)){
+    display "The user $($global:userName) has no path in $($global:userPath)" "ERROR"
+}else{
+    display "userPath is $($global:userPath) for user $($global:userName)"
 }
 if(!(Test-Path -Path $profile -PathType Leaf)){
-    display "This admin user has no profile in $($profile)" "ERROR"
+    display "The admin user $($global:userNameAdmin) has no profile in $($profile)" "ERROR"
 }else{
     $global:userProfileAdmin=$profile
+    display "userProfileAdmin is $($global:userProfileAdmin) for user $($global:userNameAdmin)"
+}
+if($userProfile -eq $null -or $userProfile -eq ""){
+    $userProfile="$($global:userPath)\My Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
+    display "No userProfile has been declared for user $($global:userName): automatically set to $($userProfile)" "WARNING"
 }
 if(!(Test-Path -Path $userProfile -PathType Leaf)){
-    display "This specified user has no profile in $($userProfile)" "ERROR"
+    display "The user $($global:userName) has no profile in $($userProfile)" "ERROR"
 }else{
     $global:userProfile=$userProfile
+    display "userProfile is $($global:userProfile) for user $($global:userName)"
 }
 if(!(Test-Path -Path "$($global:currentLocation)\admin.pwd" -PathType Leaf)){
     $global:userPasswordAdmin=$(Read-Host $(translate "Please enter the password for account $($global:userNameAdmin)") -AsSecureString)
@@ -154,7 +163,6 @@ try{
 }
 
 cd /
-cls
 display "The script is begining!"
 
 if($global:module_Apps){

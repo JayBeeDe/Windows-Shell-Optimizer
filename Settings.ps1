@@ -37,8 +37,8 @@ $global:Apps_MaxTimeOut=40
 $global:Apps_ProfileFooter=
 @(
     #array must contains at least 2 sub arrays to works
-    @("Set-PSReadlineOption -BellStyle None", $true, "disable bell when hiting return key"),
-    @("Add-PSSnapin WASP", $true, "load usefull addins (Windows 10 only!)"),
+    @("#Set-PSReadlineOption -BellStyle None", $true, "disable bell when hiting return key"),
+    @("#Add-PSSnapin WASP", $true, "load usefull addins (Windows 10 only!)"),
     @("Set-Location $env:SystemDrive\", $true, "Go to C:\"),
     @("Set-Alias ip 'Get-NetIPConfiguration'", $true, "set alias for get net Get-NetIPConfiguration")
 )
