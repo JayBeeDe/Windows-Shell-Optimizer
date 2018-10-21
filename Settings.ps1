@@ -24,7 +24,7 @@ $global:CleanStartMenuItem_WinXItem=
     )
 )
 
-$global:module_Apps=$true
+$global:module_Apps=$false
 #Set to false if not Windows 10
 $global:Apps_ResetApps=$false
 $global:Apps_InstallerDirectory="D:\Downloads\"
@@ -443,6 +443,24 @@ $global:RegistryChanges_ListItem=
         "MenuIcons",0,$true,""),
         @("HKEY_CLASSES_ROOT\Drive\shellex\DragDropHandlers\7-Zip",$true,"RemoveBuiltinContextual"),
         @("HKEY_CLASSES_ROOT\CompressedFolder\ShellEx\ContextMenuHandlers\{b8cdcb65-b1bf-4b42-9428-1dfdb7ee92af}",$true,"RemoveBuiltinContextual")
+    ),
+    @("Adobe Reader",$true,
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown","bAcroSuppressUpsell","0x00000001",$true),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown","bAcroSuppressUpsell","0x00000001",$true),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cIPM","bAllowUserToChangeMsgPrefs","0x00000000",$true),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cIPM","bAllowUserToChangeMsgPrefs","0x00000000",$true),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cIPM","bDontShowMsgWhenViewingDoc","0x00000001",$true),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cIPM","bDontShowMsgWhenViewingDoc","0x00000001",$true),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cIPM","bShowMsgAtLaunch","0x00000000",$true),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cIPM","bShowMsgAtLaunch","0x00000000",$true),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cWebmailProfiles","bDisableWebmail","0x00000001",$true),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cWebmailProfiles","bDisableWebmail","0x00000001",$true),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cServices","bToggleAdobeDocumentServices","0x00000001",$true),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cServices","bToggleAdobeDocumentServices","0x00000001",$true),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cServices","bToggleWebConnectors","0x00000001",$true),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cServices","bToggleWebConnectors","0x00000001",$true),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cSharePoint","bDisableSharePointFeatures","0x00000001",$true),
+        @("HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cSharePoint","bDisableSharePointFeatures","0x00000001",$true)
     ),
     @("Multimedia",$true,
         @("HKEY_CLASSES_ROOT\Directory\shell\AddToPlaylistVLC",$true,"Remove Add To playlist VLC for directory"),
