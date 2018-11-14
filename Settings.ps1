@@ -313,7 +313,13 @@ $global:RegistryChanges_ListItem=
         @("HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender\UX",
         "Notification_Suppress",1,$true,"Remove WinDefenderNotification"),
         @("HKEY_CURRENT_USER\SOFTWARE\Microsoft\TabletTip\1.7",
-        "TipbandDesiredVisibility",0,$true,"Remove TouchKeyboard Tray")
+        "TipbandDesiredVisibility",0,$true,"Remove TouchKeyboard Tray"),
+        @("HKEY_CURRENT_USER\Software\Microsoft\Windows\Current Version\Policies\Explorer",
+        "LockTaskbar",1,$false,"Prevent from unlock taskbar"),
+        @("HKEY_CURRENT_USER\Software\Microsoft\Windows\Current Version\Policies\Explorer",
+        "NoChangeStartMenu",1,$false,"Restrict drag and drop taskbar"),
+        @("HKEY_CURRENT_USER\Software\Microsoft\Windows\Current Version\Policies\Explorer",
+        "NoTrayContextMenu",1,$false,"Restrict right click taskbar")
     ),
     @("RemoveOfficeContextualMenu",$true,
         @("HKEY_CLASSES_ROOT\Word.Document.12\shell\New",$true),
@@ -394,6 +400,8 @@ $global:RegistryChanges_ListItem=
         @("HKEY_CLASSES_ROOT\cmdfile\shell\print",$true),
         @("HKEY_CLASSES_ROOT\txtfile\shell\print",$true),
 
+        @("HKEY_CLASSES_ROOT\*\shellex\ContextMenuHandlers\ANotepad++64",$true),
+        
         @("HKEY_CLASSES_ROOT\Folder\ShellEx\ContextMenuHandlers\Library Location",$true),
         @("HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Folder\ShellEx\ContextMenuHandlers\Library Location",$true),
 
@@ -437,7 +445,21 @@ $global:RegistryChanges_ListItem=
         @("HKEY_CLASSES_ROOT\AllFilesystemObjects\shellex\ContextMenuHandlers\{596AB062-B4D2-4215-9F74-E9109B0A8153}",$true,"Remove PreviousVersionContextualMenu 1/4"),
         @("HKEY_CLASSES_ROOT\CLSID\{450D8FBA-AD25-11D0-98A8-0800361B1103}\shellex\ContextMenuHandlers\{596AB062-B4D2-4215-9F74-E9109B0A8153}",$true,"Remove PreviousVersionContextualMenu 2/4"),
         @("HKEY_CLASSES_ROOT\Directory\shellex\ContextMenuHandlers\{596AB062-B4D2-4215-9F74-E9109B0A8153}",$true,"Remove PreviousVersionContextualMenu 3/4"),
-        @("HKEY_CLASSES_ROOT\Drive\shellex\ContextMenuHandlers\{596AB062-B4D2-4215-9F74-E9109B0A8153}",$true,"Remove PreviousVersionContextualMenu 4/4")
+        @("HKEY_CLASSES_ROOT\Drive\shellex\ContextMenuHandlers\{596AB062-B4D2-4215-9F74-E9109B0A8153}",$true,"Remove PreviousVersionContextualMenu 4/4"),
+
+        @("HKEY_CLASSES_ROOT\*\shellex\ContextMenuHandlers\Sharing",$true,"Remove Share with from contextual menu 1/7"),
+        @("HKEY_CLASSES_ROOT\Directory\Background\shellex\ContextMenuHandlers\Sharing",$true,"Remove Share with from contextual menu 2/7"),
+        @("HKEY_CLASSES_ROOT\Directory\shellex\ContextMenuHandlers\Sharing",$true,"Remove Share with from contextual menu 3/7"),
+        @("HKEY_CLASSES_ROOT\Directory\shellex\CopyHookHandlers\Sharing",$true,"Remove Share with from contextual menu 4/7"),
+        @("HKEY_CLASSES_ROOT\Drive\shellex\ContextMenuHandlers\Sharing",$true,"Remove Share with from contextual menu 5/7"),
+        @("HKEY_CLASSES_ROOT\LibraryFolder\background\shellex\ContextMenuHandlers\Sharing",$true,"Remove Share with from contextual menu 6/7"),
+        @("HKEY_CLASSES_ROOT\UserLibraryFolder\shellex\ContextMenuHandlers\Sharing",$true,"Remove Share with from contextual menu 7/7"),
+
+        @("HKEY_CLASSES_ROOT\exefile\shellex\ContextMenuHandlers\Compatibility",$true,"Remove Troubleshoot Compatibility from contexual menu 1/2"),
+        @("HKEY_CLASSES_ROOT\lnkfile\shellex\ContextMenuHandlers\Compatibility",$true,"Remove Troubleshoot Compatibility from contexual menu 2/2"),
+
+        @("HKEY_CLASSES_ROOT\AllFilesystemObjects\shellex\ContextMenuHandlers\Send To",$true,"Remove Send to from contextual menu 1/2"),
+        @("HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer","NoDrivesInSendToMenu","0x00000001",$true,"Remove Send to from contextual menu 2/2")
     ),
     @("Cloud Services ContextualMenu",$true,
         @("HKEY_CLASSES_ROOT\AllFilesystemObjects\shellex\ContextMenuHandlers\OCContextMenuHandler",$true,"Owncloud"),
