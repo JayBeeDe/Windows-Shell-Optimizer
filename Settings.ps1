@@ -630,7 +630,9 @@ $global:RegistryChanges_ListItem=
         "","",$true,"Turn off network location Wizard"),
         @("HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
         "Start_TrackDocs",0,$true,"Turn off recent items and frequent places"),
-        @("HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs",$true)
+        @("HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs",$true),
+        @("HKEY_CURRENT_USER\SOFTWARE\Microsoft\MobilePC\AdaptableSettings","SkipBatteryCheck","0x00000001",$true, "Enable Windows M%obility Center despite Desktop PC"),
+        @("HKEY_CURRENT_USER\SOFTWARE\Microsoft\MobilePC\MobilityCenter","RunOnDesktop","0x00000001",$true, "Enable Windows M%obility Center despite Desktop PC")
     ),
     @("CloudStatusIcon",$true,
         @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\  OneDriveExt1",$true,"Onedrive"),
